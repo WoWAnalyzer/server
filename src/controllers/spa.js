@@ -14,7 +14,7 @@ function nocache(req, res, next) {
   next();
 }
 
-const SPA_HOST = 'http://localhost:3000';
+const PROXY_HOST = process.env.SPA_PROXY_HOST;
 const PROXY_CONFIG = {
   timeout: 500,
   proxyReqPathResolver: req => req.originalUrl,
@@ -24,7 +24,7 @@ router.get([
   '/report/:reportCode([A-Za-z0-9]+)/:fightId([0-9]+)?:fightName(-[^/]+)?/:playerId([0-9]+)?:playerName(-[^/]{2,})?/:tab([A-Za-z0-9-]+)?',
   // This is the same route as above but without `playerId` since this breaks links without player id and with special characters such as: https://wowanalyzer.com/report/Y8GbgcB6d9ptX3K7/7-Mythic+Demonic+Inquisition+-+Wipe+1+(5:15)/Rootzô
   '/report/:reportCode([A-Za-z0-9]+)/:fightId([0-9]+)?:fightName(-[^/]+)?/:playerName([^/]{2,})?/:tab([A-Za-z0-9-]+)?',
-], nocache, proxy(SPA_HOST, {
+], nocache, proxy(PROXY_HOST, {
   ...PROXY_CONFIG,
   userResDecorator: (proxyRes, proxyResData, userReq, userRes) => {
     let response = proxyResData.toString('utf8');
@@ -56,6 +56,6 @@ router.get('*', function (req, res, next) {
     // Cache away! (maybe we should even encourage this more)
     next();
   }
-}, proxy(SPA_HOST, PROXY_CONFIG));
+}, proxy(PROXY_HOST, PROXY_CONFIG));
 
 export default router;

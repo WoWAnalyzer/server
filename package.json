@@ -22,6 +22,7 @@
     "dotenv": "^6.2.0",
     "es6-error": "^4.1.1",
     "express": "^4.16.4",
+    "express-http-proxy": "^1.5.1",
     "mariadb": "^2.0.3",
     "nanoid": "^2.0.1",
     "passport": "^0.4.0",

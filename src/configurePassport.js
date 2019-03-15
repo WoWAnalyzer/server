@@ -1,5 +1,6 @@
-import Passport from 'passport/lib/index';
-import models from 'models';
+import Passport from 'passport';
+
+import models from './models';
 
 const User = models.User;
 

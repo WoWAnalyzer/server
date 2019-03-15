@@ -12,9 +12,9 @@ function config() {
   return {
     host: process.env.MYSQL_HOST,
     port: process.env.MYSQL_PORT,
+    dialect: process.env.MYSQL_DIALECT,
     username: process.env.MYSQL_USER || 'root',
     password: process.env.MYSQL_ROOT_PASSWORD,
-    dialect: process.env.MYSQL_DIALECT,
     database: process.env.MYSQL_DATABASE,
 
     // Sequelize defaults

@@ -23,4 +23,4 @@ ENV NODE_ENV=production
 USER node
 EXPOSE 3001
 
-CMD ["npm", "run", "serve"]
+CMD ["npm", "run", "docker-serve"]

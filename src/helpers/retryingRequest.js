@@ -1,6 +1,5 @@
-import request from 'helpers/request';
-import RequestError from 'helpers/request/RequestError';
-
+import request from './request';
+import RequestError from './request/RequestError';
 import sleep from './sleep';
 
 const defaultOptions = {
@@ -20,7 +19,7 @@ async function retryingRequest(options, attempt = 1) {
 
     const start = Date.now();
     console.debug('REQUEST', `attempt #${attempt}`, `GET ${options.url}`);
-    const result = await request.get(options);
+    const result = await request(options);
     const responseTime = Date.now() - start;
     console.debug('REQUEST', 'finished', options.url, 'response time:', responseTime, 'ms');
     if (options.onSuccess) {

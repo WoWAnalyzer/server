@@ -1,10 +1,10 @@
 import querystring from 'querystring';
 
 import { warcraftLogsApiResponseLatencyHistogram } from 'helpers/metrics';
-import RequestTimeoutError from 'helpers/request/RequestTimeoutError';
-import RequestSocketTimeoutError from 'helpers/request/RequestSocketTimeoutError';
-import RequestConnectionResetError from 'helpers/request/RequestConnectionResetError';
-import RequestUnknownError from 'helpers/request/RequestUnknownError';
+import RequestTimeoutError from './request/RequestTimeoutError';
+import RequestSocketTimeoutError from './request/RequestSocketTimeoutError';
+import RequestConnectionResetError from './request/RequestConnectionResetError';
+import RequestUnknownError from './request/RequestUnknownError';
 
 import retryingRequest from './retryingRequest';
 import WarcraftLogsApiError from './WarcraftLogsApiError';

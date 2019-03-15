@@ -35,12 +35,12 @@ async function proxySpellApi(res, spellId) {
     console.log('REQUEST', 'Error fetching Spell', statusCode, message);
     const body = response ? response.body : null;
     // Ignore 404 - Spell not found errors. We check for the text so this doesn't silently break when the API endpoint changes.
-    // Example boody of good 404:
+    // Example body of good 404:
     // {
     //   "status": "nok",
-    //   "reason": "Unable to get spell information."
+    //   "reason": "unable to get spell information."
     // }
-    const isSpellNotFoundError = statusCode === 404 && body && body.includes('Unable to get spell information.');
+    const isSpellNotFoundError = statusCode === 404 && body && body.includes('unable to get spell information.');
     if (isSpellNotFoundError) {
       send404(res);
     } else {

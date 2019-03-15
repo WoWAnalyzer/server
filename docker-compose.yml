@@ -1,0 +1,26 @@
+version: '3'
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 3001:3001
+    environment:
+      - MYSQL_HOST=database
+      - MYSQL_PORT=3306
+      - MYSQL_ROOT_PASSWORD=my-secret-pw
+      - MYSQL_DIALECT=mariadb
+      - MYSQL_DATABASE=wowanalyzer
+    depends_on:
+      - database
+
+  database:
+    image: "mariadb:10.3"
+    command: ['--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci', '--max_allowed_packet=64M']
+    environment:
+     - MYSQL_ROOT_PASSWORD=my-secret-pw
+     - MYSQL_DATABASE=wowanalyzer
+    restart: always
+    ports:
+     - 3306:3306

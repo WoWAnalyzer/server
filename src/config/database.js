@@ -11,11 +11,11 @@ function config() {
 
   return {
     host: process.env.MYSQL_HOST,
-    port: process.env.MYSQL_PORT || 3306,
-    dialect: 'mariadb',
+    port: process.env.MYSQL_PORT,
     username: process.env.MYSQL_USER || 'root',
     password: process.env.MYSQL_ROOT_PASSWORD,
-    database: env === 'test' ? 'wowanalyzer_test' : 'wowanalyzer',
+    dialect: process.env.MYSQL_DIALECT,
+    database: process.env.MYSQL_DATABASE,
 
     // Sequelize defaults
     define: {
@@ -23,7 +23,6 @@ function config() {
       freezeTableName: true, // naming pattern: table name should reflect 1 entry (so it matches 1 instance of a model)
     },
     logging: false, // I prefer to do my own logging
-    operatorsAliases: false, // this disables a deprecated feature that we're not using anymore
   };
 }
 

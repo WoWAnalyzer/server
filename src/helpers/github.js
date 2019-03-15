@@ -1,17 +1,17 @@
-import request from 'request-promise-native';
+import request from './request';
 
 export async function fetchCommits(login) {
   // This will only get commits to master, but that should generally be sufficient.
   const url = `https://api.github.com/repos/WoWAnalyzer/WoWAnalyzer/commits?client_id=${process.env.GITHUB_CLIENT_ID}&client_secret=${process.env.GITHUB_CLIENT_SECRET}&author=${login}`;
   // eslint-disable-next-line no-return-await
-  return await request.get({
+  const jsonString = await request({
     url: url,
     headers: {
       'User-Agent': 'WoWAnalyzer.com API',
     },
     gzip: true, // using gzip is 80% quicker
-  })
-    .then(jsonString => JSON.parse(jsonString));
+  });
+  return JSON.parse(jsonString);
 }
 function getMostRecentCommit(commits) {
   if (!commits || commits.length === 0) {

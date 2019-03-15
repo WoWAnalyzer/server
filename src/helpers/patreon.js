@@ -1,17 +1,16 @@
-import request from 'request-promise-native';
+import request from './request';
 
 export async function fetchRawPatreonProfile(accessToken) {
   // return require('./__fixtures__/patreon-active.json');
-  // eslint-disable-next-line no-return-await
-  return await request.get({
+  const jsonString = await request({
     url: 'https://api.patreon.com/oauth2/api/current_user',
     headers: {
       'User-Agent': 'WoWAnalyzer.com API',
       'Authorization': `Bearer ${accessToken}`,
     },
     gzip: true, // using gzip was quicker for WCL, so maybe here too
-  })
-    .then(jsonString => JSON.parse(jsonString));
+  });
+  return JSON.parse(jsonString);
 }
 export function parseProfile(profile) {
   const id = profile.data.id;

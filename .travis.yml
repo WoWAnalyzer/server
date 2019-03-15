@@ -1,25 +1,24 @@
 language: node_js
-node_js: 10.12
+node_js: 11.11
 # every second counts
 git:
   depth: 5
 services: docker
 env:
   - NODE_ENV=production
-
 cache:
   directories:
-    - server/node_modules
+    - node_modules
 install:
-  - npm install --dev && cd ..
+  - npm install --dev
 script:
-  - npm run test:once -- --maxWorkers=2 && cd ..
+  - npm run test:once -- --maxWorkers=2
   - docker build --tag wowanalyzer-server .
 # Reminder: deploy doesn't run on PRs
 deploy:
   provider: script
   skip_cleanup: true
-  script: bash .docker/production/deploy.sh
+  script: bash .travis/deploy.sh
   on:
     all_branches: true
 after_failure:

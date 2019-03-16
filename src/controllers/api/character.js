@@ -32,11 +32,9 @@ const Character = models.Character;
  */
 function sendJson(res, json) {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.setHeader('Access-Control-Allow-Origin', '*');
   res.send(json);
 }
 function send404(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
   res.sendStatus(404);
 }
 
@@ -129,7 +127,6 @@ async function fetchCharacter(region, realm, name, res = null) {
       // Record the error because we want to know how often this occurs and if it breaks anything
       Raven.installed && Raven.captureException(error);
       if (res) {
-        res.setHeader('Access-Control-Allow-Origin', '*');
         res.status(500);
         sendJson(res, {
           error: 'This region is not supported',
@@ -151,7 +148,6 @@ async function fetchCharacter(region, realm, name, res = null) {
     // Everything else is unexpected
     Raven.installed && Raven.captureException(error);
     if (res) {
-      res.setHeader('Access-Control-Allow-Origin', '*');
       res.status(error.statusCode || 500);
       sendJson(res, {
         error: 'Blizzard API error',
@@ -163,6 +159,10 @@ async function fetchCharacter(region, realm, name, res = null) {
 
 const router = Express.Router();
 
+router.use(async function (req, res, next) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  next();
+});
 router.get('/:id([0-9]+)', async (req, res) => {
   const { id } = req.params;
   const character = await getStoredCharacter(id);

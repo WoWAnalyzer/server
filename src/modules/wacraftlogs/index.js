@@ -8,6 +8,7 @@ import fetchFromWarcraftLogsApi, { WCL_REPORT_DOES_NOT_EXIST_HTTP_CODE } from 'h
 import WarcraftLogsApiError from 'helpers/WarcraftLogsApiError';
 
 const WclApiResponse = models.WclApiResponse;
+const WCL_API_KEY = process.env.WCL_API_KEY;
 
 function serializeUrl(path, query) {
   return `/${path}?${querystring.stringify(query)}`;
@@ -37,7 +38,9 @@ function determineCategory(path) {
 }
 
 const router = Express.Router();
-router.get('/*', async (req, res) => {
+const relativePath = '/i/v1/';
+const relativePathLength = relativePath.length;
+router.get(`${relativePath}*`, async (req, res) => {
   const resolve = jsonString => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -50,7 +53,7 @@ router.get('/*', async (req, res) => {
 
   try {
     // remove / prefix
-    const path = req.path.substr(1);
+    const path = req.path.substr(relativePathLength);
     // Don't use `req.params[0]` here as this automatically (url)decodes parts, breaking special characters in name!
     const query = req.query;
     // This allows users to skip the cache and refresh always. This is useful when live logging. It stores the result in the regular (uncachebusted) spot so that future requests for the regular request are also updated.
@@ -58,6 +61,11 @@ router.get('/*', async (req, res) => {
     if (query._) {
       skipCache = true;
       delete query._;
+    }
+    let apiKey = WCL_API_KEY;
+    if (query.api_key) {
+      apiKey = query.api_key;
+      delete query.api_key; // avoid serializing this
     }
 
     const cacheKey = serializeUrl(path, query);
@@ -79,7 +87,7 @@ router.get('/*', async (req, res) => {
       console.log('cache SKIP', cacheKey);
     }
 
-    const wclResponse = await fetchFromWarcraftLogsApi(path, query, { category: determineCategory(path) });
+    const wclResponse = await fetchFromWarcraftLogsApi(path, query, apiKey, { category: determineCategory(path) });
     // noinspection JSIgnoredPromiseFromCall No need to wait for this as it doesn't affect the result.
     cacheWclApiResponse(cacheKey, wclResponse);
     resolve(wclResponse);

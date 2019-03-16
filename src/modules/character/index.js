@@ -161,11 +161,11 @@ async function fetchCharacter(region, realm, name, res = null) {
 
 const router = Express.Router();
 
-router.use(async function (req, res, next) {
+function cors(req, res, next) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   next();
-});
-router.get('/:id([0-9]+)', async (req, res) => {
+}
+router.get('/i/character/:id([0-9]+)', cors, async (req, res) => {
   const { id } = req.params;
   const character = await getStoredCharacter(id);
   if (!character) {
@@ -180,7 +180,7 @@ router.get('/:id([0-9]+)', async (req, res) => {
   // noinspection JSIgnoredPromiseFromCall
   fetchCharacter(character.region, character.realm, character.name);
 });
-router.get('/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})', async (req, res) => {
+router.get('/i/character/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})', cors, async (req, res) => {
   const { region, realm, name } = req.params;
 
   const storedCharacter = await getStoredCharacter(null, realm, region, name);
@@ -196,7 +196,7 @@ router.get('/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})', async (req, re
   // noinspection JSIgnoredPromiseFromCall
   fetchCharacter(region, realm, name, !responded ? res : null);
 });
-router.get('/:id([0-9]+)/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})', async (req, res) => {
+router.get('/i/character/:id([0-9]+)/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})', cors, async (req, res) => {
   const { id, region, realm, name } = req.params;
   const storedCharacter = await getStoredCharacter(id);
   let responded = false;

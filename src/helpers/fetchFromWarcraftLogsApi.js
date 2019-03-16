@@ -13,12 +13,11 @@ const WCL_DOMAIN = process.env.WARCRAFT_LOGS_DOMAIN;
 const WCL_MAINTENANCE_STRING = 'Warcraft Logs is down for maintenance';
 export const WCL_REPORT_DOES_NOT_EXIST_HTTP_CODE = 400;
 const USER_AGENT = process.env.USER_AGENT;
-const WCL_API_KEY = process.env.WCL_API_KEY;
 const TIMEOUT = 4000; // ms after which to abort the request
 
-function getWclApiUrl(path, query) {
+function getWclApiUrl(path, query, apiKey) {
   return `${WCL_DOMAIN}/v1/${path}?${querystring.stringify({
-    api_key: WCL_API_KEY,
+    api_key: apiKey,
     ...query,
   })}`;
 }
@@ -31,8 +30,8 @@ function tryJsonParse(string) {
   }
   return json;
 }
-export default async function fetchFromWarcraftLogsApi(path, query, metricLabels) {
-  const url = getWclApiUrl(path, query);
+export default async function fetchFromWarcraftLogsApi(path, query, apiKey, metricLabels) {
+  const url = getWclApiUrl(path, query, apiKey);
   let commitMetric;
   try {
     const jsonString = await retryingRequest({

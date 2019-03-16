@@ -1,5 +1,7 @@
 import Express from 'express';
 import proxy from 'express-http-proxy';
+// express-http-proxy might have a memory leak. We already have a memory leak, so this might complicate things further.
+// https://github.com/villadora/express-http-proxy/issues/365
 
 import escapeHtml from 'helpers/escapeHtml';
 

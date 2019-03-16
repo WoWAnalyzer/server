@@ -18,8 +18,21 @@ function nocache(req, res, next) {
 
 const PROXY_HOST = process.env.SPA_PROXY_HOST;
 const PROXY_CONFIG = {
-  timeout: 500,
+  // It takes the proxy about 1 second to realize the server is down if it's down. Since the SPA will always be right next to it and only hosts static content, it should normally respond within a few milliseconds or something is up.
+  timeout: 1100,
   proxyReqPathResolver: req => req.originalUrl,
+  proxyErrorHandler: function(err, res, next) {
+    switch (err && err.code) {
+      case 'ECONNREFUSED':
+        return res
+          .status(503)
+          .header('Retry-After', 5)
+          .send('App is down. This is probably due to a new version being deployed. This usually takes about 5 seconds. If this persists please let us know: https://discord.gg/AxphPxU');
+      default:
+        next(err);
+        break;
+    }
+  },
 };
 
 router.get([

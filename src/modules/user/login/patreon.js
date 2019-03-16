@@ -3,7 +3,8 @@ import Passport from 'passport';
 import { Strategy as PatreonStrategy } from 'passport-patreon';
 
 import models from 'models';
-import { fetchPatreonProfile } from 'helpers/patreon';
+
+import { fetchPatreonProfile } from '../helpers/patreon';
 
 const User = models.User;
 

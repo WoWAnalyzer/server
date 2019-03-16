@@ -1,8 +1,9 @@
 import Express from 'express';
 
 import requireAuthenticated from 'helpers/requireAuthenticated';
-import { refreshPatreonProfile } from 'helpers/patreon';
-import { refreshGitHubLastContribution } from 'helpers/github';
+
+import { refreshPatreonProfile } from './helpers/patreon';
+import { refreshGitHubLastContribution } from './helpers/github';
 
 const router = Express.Router();
 

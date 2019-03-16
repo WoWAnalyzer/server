@@ -1,4 +1,4 @@
-import request from './request';
+import request from 'helpers/request';
 
 export async function fetchCommits(login) {
   // This will only get commits to master, but that should generally be sufficient.

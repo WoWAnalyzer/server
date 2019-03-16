@@ -3,7 +3,8 @@ import Passport from 'passport';
 import { Strategy as GitHubStrategy } from 'passport-github';
 
 import models from 'models';
-import { fetchGitHubLastCommitDate } from 'helpers/github';
+
+import { fetchGitHubLastCommitDate } from '../helpers/github';
 
 const User = models.User;
 

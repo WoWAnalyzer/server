@@ -84,17 +84,17 @@ describe('controllers/user', () => {
         // the data is super old; force refresh
         await action(createRequest(100, new Date(2017, 1, 1)), response);
 
-        const patreonHelpers = require('helpers/patreon');
+        const patreonHelpers = require('modules/user/helpers/patreon');
         expect(patreonHelpers.refreshPatreonProfile).toHaveBeenCalledTimes(1);
       });
       it('doesn\'t refresh when the data is fresh', async () => {
         await action(createRequest(100, new Date()), response);
 
-        const patreonHelpers = require('helpers/patreon');
+        const patreonHelpers = require('modules/user/helpers/patreon');
         expect(patreonHelpers.refreshPatreonProfile).not.toHaveBeenCalled();
       });
       it('returns Premium status based on the refreshed data', async () => {
-        const patreonHelpers = require('helpers/patreon');
+        const patreonHelpers = require('modules/user/helpers/patreon');
         // Pledged -> unpledged
         patreonHelpers.refreshPatreonProfile = jest.fn(user => {
           user.data.patreon.pledgeAmount = null;
@@ -183,17 +183,17 @@ describe('controllers/user', () => {
         // the data is super old; force refresh
         await action(createRequest(100, new Date(2017, 1, 1)), response);
 
-        const githubHelpers = require('helpers/github');
+        const githubHelpers = require('modules/user/helpers/github');
         expect(githubHelpers.refreshGitHubLastContribution).toHaveBeenCalledTimes(1);
       });
       it('doesn\'t refresh when the data is fresh', async () => {
         await action(createRequest(100, new Date()), response);
 
-        const githubHelpers = require('helpers/github');
+        const githubHelpers = require('modules/user/helpers/github');
         expect(githubHelpers.refreshGitHubLastContribution).not.toHaveBeenCalled();
       });
       it('returns Premium status based on the refreshed data', async () => {
-        const githubHelpers = require('helpers/github');
+        const githubHelpers = require('modules/user/helpers/github');
         // Contributed -> no contribution
         githubHelpers.refreshGitHubLastContribution = jest.fn(user => {
           user.data.github.lastContribution = null;

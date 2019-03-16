@@ -1,4 +1,4 @@
-import request from './request';
+import request from 'helpers/request';
 
 export async function fetchRawPatreonProfile(accessToken) {
   // return require('./__fixtures__/patreon-active.json');

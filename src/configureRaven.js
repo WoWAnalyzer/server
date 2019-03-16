@@ -10,5 +10,4 @@ export default function configureRaven(app) {
     // The error handler must be before any other error middleware
     app.use(Sentry.Handlers.errorHandler());
   }
-  console.log(Sentry.installed)
 }

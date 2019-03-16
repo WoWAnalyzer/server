@@ -3,14 +3,19 @@ services:
   server:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile-dev
     ports:
       - 3001:3001
+    volumes:
+      - .:/usr/src/app/
+      # Use the node_modules in the container for greatly improved performance on Windows machines. This does mean you need to run either `docker-compose build server` or `docker-compose exec server npm install` when setting up new dependencies.
+      - /usr/src/app/node_modules/
     environment:
       - MYSQL_HOST=database
       - MYSQL_PORT=3306
-      - MYSQL_ROOT_PASSWORD=my-secret-pw
       - MYSQL_DIALECT=mariadb
+      - MYSQL_USER=root
+      - MYSQL_ROOT_PASSWORD=my-secret-pw
       - MYSQL_DATABASE=wowanalyzer
     depends_on:
       - database

@@ -15,13 +15,12 @@ FROM node:10.12-alpine
 
 WORKDIR /usr/src/app/
 ENV NODE_ENV=production
+USER node
+EXPOSE 3001
 
 COPY --from=build /usr/src/app/build/ /usr/src/app/
 COPY --from=build /usr/src/app/node_modules/ /usr/src/app/node_modules/
 COPY --from=build /usr/src/app/migrations/ /usr/src/app/migrations/
 COPY package.json /usr/src/app/
-
-USER node
-EXPOSE 3001
 
 CMD node --harmony node_modules/sequelize-cli/lib/sequelize db:migrate --config config/database.js && node --harmony index.js

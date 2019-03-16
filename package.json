@@ -5,7 +5,7 @@
   "license": "AGPL-3.0-or-later",
   "main": "src/index.js",
   "scripts": {
-    "start": "npm run migrate && nodemon src/index.js --exec babel-node",
+    "start": "npm run migrate && nodemon --exec babel-node src/index.js",
     "migrate": "node --harmony node_modules/sequelize-cli/lib/sequelize db:migrate --config src/config/database.js",
     "test": "jest --watchAll",
     "test:once": "jest",

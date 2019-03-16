@@ -1,4 +1,13 @@
-# WoWAnalyzer.com server
+<h1>
+  <img src="https://user-images.githubusercontent.com/4565223/54240739-2d6e0b00-451f-11e9-8473-d15e78914c9b.png" height="36" valign="bottom" /> WoWAnalyzer.com server
+  <a href="https://travis-ci.org/WoWAnalyzer/server">
+   <img src="https://travis-ci.org/WoWAnalyzer/server.svg?branch=master">
+  </a>
+</h1>
+
+> WoWAnalyzer is a tool to help you analyze and improve your World of Warcraft raiding performance through various relevant metrics and gameplay suggestions.
+
+[https://wowanalyzer.com](https://wowanalyzer.com)
 
 This repo containers the server hosting WoWAnalyzer.com. It does not include any analysis code, that can be found on [the main repository](https://github.com/WoWAnalyzer/WoWAnalyzer). This houses our internal API and login mechanisms, such as WCL and Battle.net API proxies and caches.
 

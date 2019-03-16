@@ -1,6 +1,6 @@
 import Express from 'express';
 import Sequelize from 'sequelize';
-import Raven from 'raven';
+import * as Sentry from '@sentry/node';
 
 import BlizzardCommunityApi from 'helpers/BlizzardCommunityApi';
 
@@ -44,7 +44,7 @@ async function proxySpellApi(res, spellId) {
     if (isSpellNotFoundError) {
       send404(res);
     } else {
-      Raven.installed && Raven.captureException(error);
+      Sentry.captureException(error);
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.status(statusCode || 500);
       sendJson(res, {

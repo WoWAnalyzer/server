@@ -1,6 +1,6 @@
 import Express from 'express';
 import Sequelize from 'sequelize';
-import Raven from 'raven';
+import * as Sentry from '@sentry/node';
 import { StatusCodeError } from 'request-promise-native/errors';
 
 import BlizzardCommunityApi from 'helpers/BlizzardCommunityApi';
@@ -125,7 +125,7 @@ async function fetchCharacter(region, realm, name, res = null) {
     // We can't currently support the CN region because of Blizzard API restrictions
     if (error instanceof RegionNotSupportedError) {
       // Record the error because we want to know how often this occurs and if it breaks anything
-      Raven.installed && Raven.captureException(error);
+      Sentry.captureException(error);
       if (res) {
         res.status(500);
         sendJson(res, {

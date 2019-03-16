@@ -1,11 +1,12 @@
 import Express from 'express';
 import Sequelize from 'sequelize';
 import querystring from 'querystring';
-import Raven from 'raven';
+import * as Sentry from '@sentry/node';
 
 import models from 'models';
-import fetchFromWarcraftLogsApi, { WCL_REPORT_DOES_NOT_EXIST_HTTP_CODE } from 'helpers/fetchFromWarcraftLogsApi';
-import WarcraftLogsApiError from 'helpers/WarcraftLogsApiError';
+
+import fetchFromWarcraftLogsApi, { WCL_REPORT_DOES_NOT_EXIST_HTTP_CODE } from './fetchFromWarcraftLogsApi';
+import WarcraftLogsApiError from './WarcraftLogsApiError';
 
 const WclApiResponse = models.WclApiResponse;
 const WCL_API_KEY = process.env.WCL_API_KEY;
@@ -97,7 +98,7 @@ router.get(`${relativePath}*`, async (req, res) => {
       console.error(`WCL Error (${err.statusCode}): ${err.message}`);
       if (err.statusCode !== WCL_REPORT_DOES_NOT_EXIST_HTTP_CODE) {
         // Ignore "This report does not exist or is private."
-        Raven.installed && Raven.captureException(err, {
+        Sentry.captureException(err, {
           extra: err.context,
         });
       }

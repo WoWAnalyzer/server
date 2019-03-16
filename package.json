@@ -13,6 +13,7 @@
     "serve": "node --harmony node_modules/sequelize-cli/lib/sequelize db:migrate --config build/config/database.js && node --harmony build/index.js"
   },
   "dependencies": {
+    "@sentry/node": "^4.6.4",
     "agentkeepalive": "^4.0.2",
     "babel-plugin-inline-dotenv": "^1.2.1",
     "babel-runtime": "^6.26.0",
@@ -29,7 +30,6 @@
     "passport-github": "^1.1.0",
     "passport-patreon": "^1.0.1",
     "prom-client": "^11.2.1",
-    "raven": "^2.6.4",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.7",
     "sequelize": "^5.1.0",

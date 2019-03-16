@@ -148,7 +148,7 @@ async function fetchCharacter(region, realm, name, res = null) {
     }
 
     // Everything else is unexpected
-    Raven.installed && Raven.captureException(error);
+    Sentry.captureException(error);
     if (res) {
       res.status(error.statusCode || 500);
       sendJson(res, {

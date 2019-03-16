@@ -6,7 +6,7 @@ import fs from 'fs';
 import { createServer as createMetricsServer } from 'helpers/metrics';
 
 import loadDotEnv from './config/env';
-import configureRaven from './configureRaven';
+import configureSentry from './configureSentry';
 import configureSession from './configureSession';
 import configurePassport from './configurePassport';
 import routes from './modules/routes';
@@ -16,7 +16,7 @@ const appDirectory = fs.realpathSync(process.cwd());
 loadDotEnv(appDirectory);
 
 const app = Express();
-configureRaven(app);
+configureSentry(app);
 app.use(compression());
 app.use(BodyParser.urlencoded({ extended: false }));
 configureSession(app);

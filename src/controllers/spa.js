@@ -25,6 +25,7 @@ const PROXY_CONFIG = {
     switch (err && err.code) {
       case 'ENOTFOUND': // this may occur in production because we access other servers through DNS names that can not be found if the server is down
       case 'ECONNREFUSED':
+        console.error(err.message);
         return res
           .status(503)
           .header('Retry-After', 5)

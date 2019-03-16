@@ -23,6 +23,7 @@ const PROXY_CONFIG = {
   proxyReqPathResolver: req => req.originalUrl,
   proxyErrorHandler: function(err, res, next) {
     switch (err && err.code) {
+      case 'ENOTFOUND': // this may occur in production because we access other servers through DNS names that can not be found if the server is down
       case 'ECONNREFUSED':
         return res
           .status(503)

@@ -140,7 +140,9 @@ async function fetchCharacter(region, realm, name, res = null) {
       // We check for the text so this doesn't silently break when the API endpoint changes.
       const isCharacterNotFoundError = error.statusCode === 404 && body && body.includes('Character not found.');
       if (isCharacterNotFoundError) {
-        send404(res);
+        if (res) {
+          send404(res);
+        }
         return;
       }
     }

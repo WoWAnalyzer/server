@@ -1,5 +1,6 @@
 import Express from 'express';
 import proxy from 'express-http-proxy';
+import path from 'path';
 // express-http-proxy might have a memory leak. We already have a memory leak, so this might complicate things further.
 // https://github.com/villadora/express-http-proxy/issues/365
 
@@ -28,8 +29,8 @@ const PROXY_CONFIG = {
         console.error(err.message);
         return res
           .status(503)
-          .header('Retry-After', 5)
-          .send('App is down. This is probably due to a new version being deployed. This usually takes about 5 seconds. If this persists please let us know: https://discord.gg/AxphPxU');
+          .header('Retry-After', 11)
+          .sendFile(path.join(__dirname + '/503.html'));
       default:
         next(err);
         break;
@@ -37,6 +38,9 @@ const PROXY_CONFIG = {
   },
 };
 
+router.get('/CharacterJourney.mp4', function (req, res) {
+  return res.status(200).sendFile(path.join(__dirname + '/CharacterJourney.mp4'));
+});
 router.get([
   '/report/:reportCode([A-Za-z0-9]+)/:fightId([0-9]+)?:fightName(-[^/]+)?/:playerId([0-9]+)?:playerName(-[^/]{2,})?/:tab([A-Za-z0-9-]+)?',
   // This is the same route as above but without `playerId` since this breaks links without player id and with special characters such as: https://wowanalyzer.com/report/Y8GbgcB6d9ptX3K7/7-Mythic+Demonic+Inquisition+-+Wipe+1+(5:15)/Rootzô

@@ -15,13 +15,13 @@ export default async function request(options) {
       const code = err.error.code;
       switch (code) {
         case 'ETIMEDOUT':
-          throw new RequestTimeoutError();
+          throw new RequestTimeoutError(err);
         case 'ECONNRESET':
-          throw new RequestConnectionResetError();
+          throw new RequestConnectionResetError(err);
         case 'ESOCKETTIMEDOUT':
-          throw new RequestSocketTimeoutError();
+          throw new RequestSocketTimeoutError(err);
         default:
-          throw new RequestUnknownError();
+          throw new RequestUnknownError(err);
       }
     }
     throw err;

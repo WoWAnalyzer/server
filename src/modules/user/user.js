@@ -44,6 +44,7 @@ router.get('/', requireAuthenticated, async function (req, res) {
   const response = {
     name: user.data.name,
     avatar: user.data.avatar,
+    premium: false,
   };
 
   if (user.data.patreon) {

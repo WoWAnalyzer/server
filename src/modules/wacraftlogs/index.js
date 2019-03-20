@@ -109,6 +109,7 @@ router.get(`${relativePath}*`, async (req, res) => {
     } else {
       // An error on our side
       console.error('A server error occured', err);
+      Sentry.captureException(err);
       reject(500, {
         error: 'A server error occured',
         message: err.message,

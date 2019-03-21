@@ -1,4 +1,5 @@
 version: '3'
+
 services:
   server:
     build:
@@ -21,8 +22,8 @@ services:
       - database
 
   database:
-    image: "mariadb:10.3"
-    command: ['--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci', '--max_allowed_packet=64M']
+    image: mariadb:10.3
+    command: ['--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci', '--lower_case_table_names=0', '--max_allowed_packet=16M']
     environment:
      - MYSQL_ROOT_PASSWORD=my-secret-pw
      - MYSQL_DATABASE=wowanalyzer

@@ -14,11 +14,23 @@ const WCL_API_KEY = process.env.WCL_API_KEY;
 function serializeUrl(path, query) {
   return `/${path}?${querystring.stringify(query)}`;
 }
-async function cacheWclApiResponse(cacheKey, response) {
-  // Regardless of already existing, reset `numAccesses` to 1 since we want to know accesses since last cache bust which helps us determine if we should keep certain responses in our cache. If an url is regularly cache busted, it's not as valuable in the cache.
+// The max cache size is currently based on the database's max_allowed_packet
+// value. This is set to 16MB which also seems like a fine limit to skip
+// caching at as it's uncommon (only happens for M+ logs).
+const MAX_CACHE_ENTRY_SIZE = 16 * 1024 * 1024; // 16 MB
+async function cacheWclApiResponse(cacheKey, content) {
+  const contentLength = content.length;
+  if (contentLength > MAX_CACHE_ENTRY_SIZE) {
+    console.debug('Not caching', cacheKey, 'since it\'s too large.', (contentLength / 1024 / 1024).toFixed(1), 'MB (max is', MAX_CACHE_ENTRY_SIZE / 1024 / 1024, 'MB)');
+    return;
+  }
+  // Regardless of already existing, set `numAccesses` to 1 since we want to
+  // know accesses since last cache bust which helps us determine if we should
+  // keep certain responses in our cache. If an url is regularly cache busted
+  // it's not as valuable in the cache.
   await WclApiResponse.upsert({
     url: cacheKey,
-    content: response,
+    content,
     wclResponseTime: 0, // TODO: Drop this column
     numAccesses: 1,
     lastAccessedAt: Sequelize.fn('NOW'),

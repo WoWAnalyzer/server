@@ -7,8 +7,6 @@ const appDirectory = fs.realpathSync(process.cwd());
 loadDotEnv(appDirectory);
 
 function config() {
-  const env = process.env.NODE_ENV;
-
   return {
     host: process.env.MYSQL_HOST,
     port: process.env.MYSQL_PORT,

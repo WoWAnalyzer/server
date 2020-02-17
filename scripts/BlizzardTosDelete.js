@@ -1,4 +1,4 @@
-import models from '../models';
+import models from '../src/models';
 import Sequelize from 'sequelize';
 import * as Sentry from '@sentry/node';
 const Op = Sequelize.Op;
@@ -31,8 +31,6 @@ Character.findAll({
         }
     }
 }).then(characters => {
-    console.log("Characters: " + characters.length)
-
     try {
         characters.forEach(character => {
             charactersModified++;

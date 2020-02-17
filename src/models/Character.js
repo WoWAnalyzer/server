@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     name: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     battlegroup: {
       type: DataTypes.STRING,
@@ -58,6 +58,10 @@ module.exports = (sequelize, DataTypes) => {
     },
     heartOfAzeroth: {
       type: DataTypes.JSON,
+      allowNull: true,
+    },
+    blizzardUpdatedAt: {
+      type: DataTypes.DATE,
       allowNull: true,
     },
     createdAt: {

@@ -7,7 +7,6 @@ const Character = models.Character;
 async function updateCharacter(character) {
     await Character.upsert({
         ...character,
-        name: null,
         battlegroup: null,
         faction: null,
         class: null,

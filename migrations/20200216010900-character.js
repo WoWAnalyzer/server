@@ -3,9 +3,6 @@ module.exports = {
     return Promise.all([
       queryInterface.addColumn('Character', 'blizzardUpdatedAt', Sequelize.DATEONLY, {
         allowNull: true,
-      }),
-      queryInterface.changeColumn('Character', 'name', Sequelize.STRING, {
-        allowNull: true,
       })
     ]);
   },

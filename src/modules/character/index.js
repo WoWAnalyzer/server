@@ -82,6 +82,9 @@ async function getCharacterFromBlizzardApi(region, realm, name) {
       azeriteItemLevel: heartOfAzerothItem.azeriteItem && heartOfAzerothItem.azeriteItem.azeriteLevel,
     };
   }
+
+  json.blizzardUpdatedAt = new Date();
+
   delete json.items;
 
   return json;

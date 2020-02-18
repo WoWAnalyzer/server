@@ -31,6 +31,8 @@ Character.findAll({
         }
     }
 }).then(characters => {
+    console.log('Resetting', characters.length, 'characters');
+
     try {
         characters.forEach(character => {
             charactersModified++;

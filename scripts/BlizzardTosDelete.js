@@ -1,6 +1,7 @@
-import models from '../src/models';
-import Sequelize from 'sequelize';
-import * as Sentry from '@sentry/node';
+const Sequelize = require('sequelize');
+const Sentry = require('@sentry/node');
+const models = require('../models').default;
+
 const Op = Sequelize.Op;
 const Character = models.Character;
 

@@ -6,8 +6,7 @@ const Op = Sequelize.Op;
 const Character = models.Character;
 
 async function updateCharacter(character) {
-    await Character.upsert({
-        ...character,
+    await Character.update({
         battlegroup: null,
         faction: null,
         class: null,
@@ -19,27 +18,29 @@ async function updateCharacter(character) {
         role: null,
         talents: null,
         heartOfAzeroth: null
-      });
+    }, {
+        where: {
+            id: character.id,
+        }
+    });
 }
-
-var charactersModified = 0;
 
 Character.findAll({
     where: {
         blizzardUpdatedAt: {
-            [Op.between]: [new Date("1/1/2020"), new Date(new Date().setDate(new Date().getDate() - 30))]
+            [Op.between]: [new Date('2020-01-01'), new Date(new Date().setDate(new Date().getDate() - 30))]
         }
     }
 }).then(characters => {
     console.log('Resetting', characters.length, 'characters');
 
+    let charactersModified = 0;
     try {
         characters.forEach(character => {
-            charactersModified++;
             updateCharacter(character.dataValues);
-            });
-    }
-    catch (error) {
+            charactersModified++;
+        });
+    } catch (error) {
         Sentry.captureException(error);
     }
 

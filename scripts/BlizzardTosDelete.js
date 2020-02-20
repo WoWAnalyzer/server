@@ -1,6 +1,7 @@
 const Sequelize = require('sequelize');
 const Sentry = require('@sentry/node');
-const models = require('../models').default;
+
+const models = require(process.env.NODE_ENV === 'production' ? '../models' : '../src/models').default;
 
 const Op = Sequelize.Op;
 const Character = models.Character;

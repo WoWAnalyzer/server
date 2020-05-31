@@ -3,7 +3,7 @@ import Sequelize from 'sequelize';
 import * as Sentry from '@sentry/node';
 import { StatusCodeError } from 'request-promise-native/errors';
 
-import BlizzardCommunityApi from 'helpers/BlizzardCommunityApi';
+import BlizzardApi, { getCharacterFaction, getCharacterGender, getCharacterRole } from 'helpers/BlizzardApi';
 import RegionNotSupportedError from 'helpers/RegionNotSupportedError';
 
 import models from '../../models';
@@ -45,47 +45,69 @@ function getCharacterId(thumbnail) {
 }
 
 async function getCharacterFromBlizzardApi(region, realm, name) {
-  const response = await BlizzardCommunityApi.fetchCharacter(region, realm, name, 'talents,items');
-  const data = JSON.parse(response);
-  if (!data || !data.thumbnail) {
-    throw new Error('Corrupt response received');
+  const characterResponse = await BlizzardApi.fetchCharacter(region, realm, name);
+  const characterData = JSON.parse(characterResponse);
+  if (!characterData) {
+    throw new Error('Invalid character response received');
   }
-  // This is the only field that we need and isn't always otherwise obtainable (e.g. when this is fetched by character id)
-  // eslint-disable-next-line prefer-const
-  const { talents, thumbnail, items, ...other } = data;
-  delete other.calcClass;
-  delete other.totalHonorableKills;
-  delete other.level;
-  delete other.lastModified;
-  const characterId = getCharacterId(thumbnail);
+
+  const characterEquipmentResponse = await BlizzardApi.fetchCharacterEquipment(region, realm, name);
+  const characterEquipmentData = JSON.parse(characterEquipmentResponse);
+  if (!characterEquipmentData) {
+    throw new Error('Invalid character equipement response received');
+  }
+
+  const characterMediaResponse = await BlizzardApi.fetchCharacterMedia(region, realm, name);
+  const characterMediaData = JSON.parse(characterMediaResponse);
+  if (!characterMediaData) {
+    throw new Error('Invalid character media response received');
+  }
+
+  const characterSpecializationsResponse = await BlizzardApi.fetchCharacterSpecializations(region, realm, name);
+  const characterSpecializationsData = JSON.parse(characterSpecializationsResponse);
+  if (!characterSpecializationsData) {
+    throw new Error('Invalid character specializations response received');
+  }
+
+  const currentSpecName = characterSpecializationsData.active_specialization && characterSpecializationsData.active_specialization.name;
+
   const json = {
-    id: Number(characterId),
-    region,
-    thumbnail,
-    ...other,
+    id: characterData.id,
+    region: region.toLowerCase(),
+    realm: characterData.realm && characterData.realm.name,
+    name: characterData.name,
+    battlegroup: null, // deprecated in the new Blizzard API
+    faction: getCharacterFaction(characterData.faction.type),
+    class: characterData.character_class && characterData.character_class.id,
+    race: characterData.race && characterData.race.id,
+    gender: characterData.gender && getCharacterGender(characterData.gender.type),
+    achievementPoints: characterData.achievement_points,
+    thumbnail: characterMediaData.avatar_url && characterMediaData.avatar_url.split('character/')[1],
+    spec: currentSpecName,
+    role: getCharacterRole(characterData.character_class && characterData.character_class.name, currentSpecName),
+    blizzardUpdatedAt: new Date(),
+    // creation date isn't returned by the new Blizzard API, and this is a required column in the DB
+    createdAt: new Date(),
+    lastSeenAt: characterData.last_login_timestamp ? new Date(characterData.last_login_timestamp) : null
   };
-  if (talents) {
-    const selectedSpec = talents.find(e => e.selected);
-    json.spec = selectedSpec.spec.name;
-    json.role = selectedSpec.spec.role;
-    json.talents = selectedSpec.calcTalent;
-  }
-  if (items && items.neck && items.neck.id === HEART_OF_AZEROTH_ID) {
-    const heartOfAzerothItem = items.neck;
+
+  const heartOfAzeroth = characterEquipmentData.equipped_items.find(it => it.item && it.item.id === HEART_OF_AZEROTH_ID);
+  if (heartOfAzeroth) {
     json.heartOfAzeroth = {
-      id: heartOfAzerothItem.id,
-      name: heartOfAzerothItem.name,
-      icon: heartOfAzerothItem.icon,
-      quality: heartOfAzerothItem.quality,
-      itemLevel: heartOfAzerothItem.itemLevel,
-      timewalkerLevel: heartOfAzerothItem.tooltipParams && heartOfAzerothItem.tooltipParams.timewalkerLevel,
-      azeriteItemLevel: heartOfAzerothItem.azeriteItem && heartOfAzerothItem.azeriteItem.azeriteLevel,
+      id: heartOfAzeroth.item.id,
+      name: heartOfAzeroth.name,
+      icon: "inv_heartofazeroth", // HoA always has the same icon
+      quality: 6, // HoA is always an Artefact
+      itemLevel: heartOfAzeroth.level && heartOfAzeroth.level.value,
+      timewalkerLevel: null, // not returned by the new Blizzard API
+      azeriteItemLevel: heartOfAzeroth.azerite_details && heartOfAzeroth.azerite_details.level.value
     };
   }
 
-  json.blizzardUpdatedAt = new Date();
-
-  delete json.items;
+  const currentSpec = characterSpecializationsData.specializations.find(it => it.specialization.name === currentSpecName);
+  if (currentSpec) {
+    json.talents = currentSpec.talents.map(it => it.column_index).join('');
+  }
 
   return json;
 }

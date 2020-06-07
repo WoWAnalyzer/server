@@ -44,10 +44,10 @@ async function getGuildFromBlizzardApi(region, realm, name) {
     memberCount: guildData.member_count,
     crest: {
       emblemId: crest.emblem.id,
-      emblemColor: [crest.emblem.color.r, crest.emblem.color.g, crest.emblem.color.b, crest.emblem.color.a],
+      emblemColor: [crest.emblem.color.rgba.r, crest.emblem.color.rgba.g, crest.emblem.color.rgba.b, crest.emblem.color.rgba.a],
       borderId: crest.border.id,
-      borderColor: [crest.border.color.r, crest.border.color.g, crest.border.color.b, crest.border.color.a],
-      backgroundColor: [crest.background.color.r, crest.background.color.g, crest.background.color.b, crest.background.color.a],
+      borderColor: [crest.border.color.rgba.r, crest.border.color.rgba.g, crest.border.color.rgba.b, crest.border.color.rgba.a],
+      backgroundColor: [crest.background.color.rgba.r, crest.background.color.rgba.g, crest.background.color.rgba.b, crest.background.color.rgba.a],
     }
   }
 }

@@ -29,9 +29,18 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
     [REGIONS.KR]: 'ko_KR',
   };
 
+  async fetchGuild(regionCode, realm, name) {
+    const region = this._getRegion(regionCode);
+    const realmSlug = this._getRealmSlug(realm);
+
+    return this._fetchApi(region, 'guild', `/data/wow/guild/${encodeURIComponent(realmSlug)}/${encodeURIComponent(name.toLowerCase())}`, {
+      'namespace': `profile-${region}`,
+    });
+  }
+
   async fetchCharacter(regionCode, realm, name) {
     const region = this._getRegion(regionCode);
-    const realmSlug = this._getRealSlug(realm);
+    const realmSlug = this._getRealmSlug(realm);
 
     return this._fetchApi(region, 'character', `/profile/wow/character/${encodeURIComponent(realmSlug)}/${encodeURIComponent(name.toLowerCase())}`, {
       'namespace': `profile-${region}`,
@@ -40,7 +49,7 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
 
   async fetchCharacterEquipment(regionCode, realm, name) {
     const region = this._getRegion(regionCode);
-    const realmSlug = this._getRealSlug(realm);
+    const realmSlug = this._getRealmSlug(realm);
 
     return this._fetchApi(region, 'character-equipment', `/profile/wow/character/${encodeURIComponent(realmSlug)}/${encodeURIComponent(name.toLowerCase())}/equipment`, {
       'namespace': `profile-${region}`,
@@ -49,7 +58,7 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
 
   async fetchCharacterMedia(regionCode, realm, name) {
     const region = this._getRegion(regionCode);
-    const realmSlug = this._getRealSlug(realm);
+    const realmSlug = this._getRealmSlug(realm);
 
     return this._fetchApi(region, 'character-media', `/profile/wow/character/${encodeURIComponent(realmSlug)}/${encodeURIComponent(name.toLowerCase())}/character-media`, {
       'namespace': `profile-${region}`,
@@ -58,7 +67,7 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
 
   async fetchCharacterSpecializations(regionCode, realm, name) {
     const region = this._getRegion(regionCode);
-    const realmSlug = this._getRealSlug(realm);
+    const realmSlug = this._getRealmSlug(realm);
 
     return this._fetchApi(region, 'character-specializations', `/profile/wow/character/${encodeURIComponent(realmSlug)}/${encodeURIComponent(name.toLowerCase())}/specializations`, {
       'namespace': `profile-${region}`,
@@ -75,7 +84,7 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
     })}`;
   }
 
-  _getRealSlug(realmName) {
+  _getRealmSlug(realmName) {
     return realmName.replace(/'/g, "").replace(/\s/g, "-").toLowerCase();
   }
 

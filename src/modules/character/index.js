@@ -3,7 +3,7 @@ import Sequelize from 'sequelize';
 import * as Sentry from '@sentry/node';
 import { StatusCodeError } from 'request-promise-native/errors';
 
-import BlizzardApi, { getCharacterFaction, getCharacterGender, getCharacterRole } from 'helpers/BlizzardApi';
+import BlizzardApi, { getFactionFromType, getCharacterGender, getCharacterRole } from 'helpers/BlizzardApi';
 import RegionNotSupportedError from 'helpers/RegionNotSupportedError';
 
 import models from '../../models';
@@ -77,7 +77,7 @@ async function getCharacterFromBlizzardApi(region, realm, name) {
     realm: characterData.realm && characterData.realm.name,
     name: characterData.name,
     battlegroup: null, // deprecated in the new Blizzard API
-    faction: getCharacterFaction(characterData.faction.type),
+    faction: getFactionFromType(characterData.faction.type),
     class: characterData.character_class && characterData.character_class.id,
     race: characterData.race && characterData.race.id,
     gender: characterData.gender && getCharacterGender(characterData.gender.type),

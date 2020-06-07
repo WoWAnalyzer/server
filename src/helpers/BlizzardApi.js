@@ -175,7 +175,7 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
 
 export default new BlizzardApi();
 
-export function getCharacterFaction(type) {
+export function getFactionFromType(type) {
   switch (type) {
     case "HORDE":
       return 1;

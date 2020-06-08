@@ -33,9 +33,6 @@ async function getGuildFromBlizzardApi(region, realm, nameSlug) {
   return {
     id: guildData.id,
     region: region.toLowerCase(),
-    /* TODO I want to store the "true" realm & guild name given back by the API, but my gut says that this might break
-      the `where` clause in getStoredGuild. A lot of potential character case switching and different character encoding?
-     */
     realm: realm,
     name: guildData.name,
     nameSlug: nameSlug,

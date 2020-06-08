@@ -23,8 +23,8 @@ function send404(res) {
   res.sendStatus(404);
 }
 
-async function getGuildFromBlizzardApi(region, realm, name) {
-  const guildResponse = await BlizzardApi.fetchGuild(region, realm, name);
+async function getGuildFromBlizzardApi(region, realm, nameSlug) {
+  const guildResponse = await BlizzardApi.fetchGuild(region, realm, nameSlug);
   const guildData = JSON.parse(guildResponse);
   if (!guildData) {
     throw new Error('Invalid guild response received');
@@ -37,7 +37,8 @@ async function getGuildFromBlizzardApi(region, realm, name) {
       the `where` clause in getStoredGuild. A lot of potential character case switching and different character encoding?
      */
     realm: realm,
-    name: name,
+    name: guildData.name,
+    nameSlug: nameSlug,
     faction: getFactionFromType(guildData.faction.type),
     created: guildData.created_timestamp,
     achievementPoints: guildData.achievement_points,
@@ -52,11 +53,11 @@ async function getGuildFromBlizzardApi(region, realm, name) {
   }
 }
 
-async function getStoredGuild(realm, region, name) {
-  if (realm && name && region) {
+async function getStoredGuild(realm, region, nameSlug) {
+  if (realm && nameSlug && region) {
     return Guild.findOne({
       where: {
-        name,
+        nameSlug,
         region,
         realm,
       },
@@ -72,9 +73,9 @@ async function storeGuild(guild) {
   });
 }
 
-async function fetchGuild(region, realm, name, res = null) {
+async function fetchGuild(region, realm, nameSlug, res = null) {
   try {
-    const guildFromApi = await getGuildFromBlizzardApi(region, realm, name);
+    const guildFromApi = await getGuildFromBlizzardApi(region, realm, nameSlug);
     if (res) {
       sendJson(res, guildFromApi);
     }
@@ -127,14 +128,16 @@ function cors(req, res, next) {
 const router = Express.Router();
 router.get('/i/guild/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})', cors, async (req, res) => {
   const {region, realm, name} = req.params;
-  const storedGuild = await getStoredGuild(realm, region, name)
+  // Because guild name is used as an index, slug it for consistency
+  const nameSlug = name.replace(/\s/g, "-").toLowerCase();
+  const storedGuild = await getStoredGuild(realm, region, nameSlug);
 
   let responded = false;
   if (storedGuild) {
     sendJson(res, storedGuild);
     responded = true;
   }
-  fetchGuild(region, realm, name, !responded ? res : null)
+  fetchGuild(region, realm, nameSlug, !responded ? res : null)
 });
 
 export default router;

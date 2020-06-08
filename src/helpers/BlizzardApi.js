@@ -29,10 +29,9 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
     [REGIONS.KR]: 'ko_KR',
   };
 
-  async fetchGuild(regionCode, realm, name) {
+  async fetchGuild(regionCode, realm, nameSlug) {
     const region = this._getRegion(regionCode);
     const realmSlug = this._getRealmSlug(realm);
-    const nameSlug = name.replace(/\s/g, "-").toLowerCase();
     return this._fetchApi(region, 'guild', `/data/wow/guild/${encodeURIComponent(realmSlug)}/${encodeURIComponent(nameSlug)}`, {
       'namespace': `profile-${region}`,
     });

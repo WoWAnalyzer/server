@@ -19,6 +19,10 @@ module.exports = {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      nameSlug: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
       faction: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -50,7 +54,7 @@ module.exports = {
         allowNull: false,
       },
     }).then(result => Promise.all([
-      queryInterface.addIndex('Guild', ['region', 'realm', 'name']),
+      queryInterface.addIndex('Guild', ['region', 'realm', 'nameSlug']),
     ]));
   },
 

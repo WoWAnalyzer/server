@@ -23,7 +23,8 @@ async function wipeExpiredCharacters() {
     spec: null,
     role: null,
     talents: null,
-    heartOfAzeroth: null
+    heartOfAzeroth: null,
+    blizzardUpdatedAt: new Date()
   }, {
     where: {
       blizzardUpdatedAt: {

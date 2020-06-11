@@ -1,5 +1,5 @@
 import Express from 'express';
-import Sequelize from 'sequelize';
+import { Sequelize, Op } from 'sequelize';
 import * as Sentry from '@sentry/node';
 import { StatusCodeError } from 'request-promise-native/errors';
 
@@ -122,6 +122,9 @@ async function getStoredCharacter(id, realm, region, name) {
         name,
         region,
         realm,
+        // Prevent returning characters that were wiped through the background
+        // job. See: jobs/characters.js
+        class: { [Op.ne]: null }
       },
     });
   }

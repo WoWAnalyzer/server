@@ -1,6 +1,6 @@
-import { deleteExpiredCharactersJob } from './characters';
+import { wipeExpiredCharactersJob } from './characters';
 
 export default function startJobs() {
   console.log('Starting background jobs...')
-  deleteExpiredCharactersJob.start();
+  wipeExpiredCharactersJob.start();
 }

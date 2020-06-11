@@ -1,11 +1,17 @@
 const CronJob = require('cron').CronJob;
+const Sentry = require('@sentry/node');
+
 import moment from 'moment';
 import models from '../models';
 import { Op } from 'sequelize';
 
 const Character = models.Character;
+const newTosDate = moment.utc('2020-01-01').toDate();
 
-async function updateCharacter(character) {
+async function wipeExpiredCharacters() {
+  const expirationDate = moment().subtract(30, 'days').toDate();
+  console.log(`Wiping characters between ${newTosDate} and ${expirationDate}...`);
+
   await Character.update({
     battlegroup: null,
     faction: null,
@@ -20,49 +26,19 @@ async function updateCharacter(character) {
     heartOfAzeroth: null
   }, {
     where: {
-      id: character.id
-    }
-  });
-}
-
-async function deleteExpiredCharacters() {
-  Character.findAll({
-    where: {
-      // we don't want to wipe data that is already wiped
-      [Op.or]: [
-        { battlegroup: { [Op.ne]: null } },
-        { faction: { [Op.ne]: null } },
-        { class: { [Op.ne]: null } },
-        { race: { [Op.ne]: null } },
-        { gender: { [Op.ne]: null } },
-        { achievementPoints: { [Op.ne]: null } },
-        { thumbnail: { [Op.ne]: null } },
-        { spec: { [Op.ne]: null } },
-        { role: { [Op.ne]: null } },
-        { talents: { [Op.ne]: null } },
-        { heartOfAzeroth: { [Op.ne]: null } },
-      ],
-      // we only want to wipe data after the TOS were changed
       blizzardUpdatedAt: {
-        [Op.between]: [moment.utc('2020-01-01'), moment().subtract(30, 'days').toDate()]
+        [Op.between]: [newTosDate, expirationDate]
       }
     }
-  }).then(characters => {
-    console.log('Resetting', characters.length, 'characters');
-
-    let charactersModified = 0;
-    try {
-      characters.forEach(character => {
-        updateCharacter(character.dataValues);
-        charactersModified++;
-      });
-    } catch (error) {
-      Sentry.captureException(error);
-    }
-
-    console.log("Total Characters Nullified: " + charactersModified);
+  })
+  .then(() => {
+    console.log("Done");
+  })
+  .catch(error => {
+    console.log("Error while wiping characters", error);
+    Sentry.captureException(error);
   });
 }
 
 // run the job every day at 00:00
-export const deleteExpiredCharactersJob = new CronJob('0 0 * * * *', deleteExpiredCharacters);
+export const wipeExpiredCharactersJob = new CronJob('0 0 * * * *', wipeExpiredCharacters);

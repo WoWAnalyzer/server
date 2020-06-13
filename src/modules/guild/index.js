@@ -95,9 +95,7 @@ async function fetchGuild(region, realm, nameSlug, res = null) {
 
     // Handle 404: guild not found errors.
     if (error instanceof StatusCodeError) {
-      // We check for the text so this doesn't silently break when the API endpoint changes.
-      const isGuildNotFoundError = error.statusCode === 404 && body && body.includes('Not found');
-      if (isGuildNotFoundError) {
+      if (error.statusCode === 404) {
         if (res) {
           send404(res);
         }

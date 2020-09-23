@@ -10,6 +10,7 @@ import configureSentry from './configureSentry';
 import configureSession from './configureSession';
 import configurePassport from './configurePassport';
 import routes from './modules/routes';
+import startJobs from './jobs';
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 const appDirectory = fs.realpathSync(process.cwd());
@@ -28,3 +29,4 @@ app.listen(process.env.PORT, () => {
 });
 
 createMetricsServer();
+startJobs();

@@ -62,6 +62,11 @@ async function getCharacterFromBlizzardApi(region, realm, name) {
   if (!characterMediaData) {
     throw new Error('Invalid character media response received');
   }
+  let thumbnailAsset = characterMediaData.assets && characterMediaData.assets.find(entry => entry.key === 'avatar');
+  if(!thumbnailSlug) {
+    throw new Error('Invalid character media response received');
+  }
+  thumbnailAsset = thumbnailAsset.value;
 
   const characterSpecializationsResponse = await BlizzardApi.fetchCharacterSpecializations(region, realm, name);
   const characterSpecializationsData = JSON.parse(characterSpecializationsResponse);
@@ -82,7 +87,7 @@ async function getCharacterFromBlizzardApi(region, realm, name) {
     race: characterData.race && characterData.race.id,
     gender: characterData.gender && getCharacterGender(characterData.gender.type),
     achievementPoints: characterData.achievement_points,
-    thumbnail: characterMediaData.avatar_url && characterMediaData.avatar_url.split('character/')[1],
+    thumbnail: thumbnailAsset && thumbnailAsset.split('character/')[1],
     spec: currentSpecName,
     role: getCharacterRole(characterData.character_class && characterData.character_class.name, currentSpecName),
     blizzardUpdatedAt: new Date(),

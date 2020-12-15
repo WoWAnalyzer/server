@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 env:
   CI: true
-  DOCKER_BUILD_TAG: martijnhols/healfie:build-${{ github.run_number }}
+  DOCKER_BUILD_TAG: build-${{ github.run_number }}
 
 jobs:
   build:

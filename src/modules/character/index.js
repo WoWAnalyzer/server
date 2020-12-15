@@ -62,7 +62,7 @@ async function getCharacterFromBlizzardApi(region, realm, name) {
   if (!characterMediaData) {
     throw new Error('Invalid character media response received');
   }
-  const thumbnailAsset = characterMediaData.avatar_url;
+  const thumbnailAsset = characterMediaData.avatar_url || characterMediaData.assets.find(asset => asset.key === 'avatar').value;
   if(!thumbnailAsset) {
     throw new Error('Invalid character media response received');
   }

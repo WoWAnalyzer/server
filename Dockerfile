@@ -4,7 +4,7 @@ WORKDIR /usr/src/app/
 ENV NODE_ENV=production
 
 # By doing this separate we allow Docker to cache this
-COPY package.json package-lock.json /usr/src/app/
+COPY package.json yarn.lock /usr/src/app/
 RUN yarn --production=false
 
 COPY . /usr/src/app/

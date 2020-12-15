@@ -1,0 +1,24 @@
+name: 'Build'
+
+on: [push, pull_request]
+
+env:
+  CI: true
+  DOCKER_BUILD_TAG: martijnhols/healfie:build-${{ github.run_number }}
+
+jobs:
+  build:
+    name: 'Build'
+    runs-on: ubuntu-latest
+    env:
+      YARN_CACHE_FOLDER: .yarn-cache
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14.x'
+      - run: yarn --frozen-lockfile
+      - run: yarn test:once --maxWorkers=2
+      - run: docker build --tag wowanalyzer-server .
+      - run: bash .github/workflows/deploy.sh
+        if: github.event_name != 'pull_request' && github.repository == 'wowanalyzer/wowanalyzer'

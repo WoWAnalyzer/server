@@ -6,13 +6,14 @@ git:
 services: docker
 env:
   - NODE_ENV=production
-cache:
-  directories:
-    - $HOME/.npm
+# We no longer use npm, and I cba yarn since this really never builds
+#cache:
+#  directories:
+#    - $HOME/.npm
 install:
-  - npm ci --dev
+  - yarn --production=false
 script:
-  - npm run test:once -- --maxWorkers=2
+  - yarn test:once --maxWorkers=2
   - docker build --tag wowanalyzer-server .
 # Reminder: deploy doesn't run on PRs
 deploy:

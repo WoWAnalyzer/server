@@ -5,11 +5,11 @@ ENV NODE_ENV=production
 
 # By doing this separate we allow Docker to cache this
 COPY package.json package-lock.json /usr/src/app/
-RUN npm ci --dev
+RUN yarn --production=false
 
 COPY . /usr/src/app/
-RUN npm run build
-RUN npm prune --production
+RUN yarn build
+RUN yarn --production=true
 
 FROM node:14-alpine
 

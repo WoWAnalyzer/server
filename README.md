@@ -42,14 +42,14 @@ npm install --no-save tedious # Microsoft SQL Server
 Otherwise either run `docker-compose up -d database` to start a Docker database (__recommended__) or install [MariaDB](https://downloads.mariadb.org/).
 
 #### Dev server
-1. Install dependencies: `npm install`
-2. Fire her up: `npm start`
+1. Install dependencies: `yarn`
+2. Fire her up: `yarn start`
 
 Now the development server is available at http://localhost:3001. It will recompile automatically but not refresh.
 
 #### Installing new dependencies
-- `npm install --save new-dependency` for a production dependency
-- `npm install --save-dev new-dependency` for a development dependency
+- `yarn add new-dependency` for a production dependency
+- `yarn add -D new-dependency` for a development dependency
 
 ### Docker
 
@@ -63,7 +63,7 @@ Now the development server is available at http://localhost:3001. It will recomp
 #### Installing new dependencies
 Either:
 - Add it to package.json and run `docker-compose up --build -d`
-- `docker-compose exec server npm install --save new-dependency`
+- `docker-compose exec server yarn add new-dependency`
 
 ### Combining with the SPA dev server
 

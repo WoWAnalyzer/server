@@ -59,7 +59,6 @@ async function getCharacterFromBlizzardApi(region, realm, name) {
 
   const characterMediaResponse = await BlizzardApi.fetchCharacterMedia(region, realm, name);
   const characterMediaData = JSON.parse(characterMediaResponse);
-  console.log(characterMediaData)
   if (!characterMediaData) {
     throw new Error('Invalid character media response received');
   }

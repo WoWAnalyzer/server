@@ -1,4 +1,4 @@
-FROM node:11.12-alpine as build
+FROM node:14-alpine as build
 
 WORKDIR /usr/src/app/
 ENV NODE_ENV=production
@@ -11,7 +11,7 @@ COPY . /usr/src/app/
 RUN npm run build
 RUN npm prune --production
 
-FROM node:11.12-alpine
+FROM node:14-alpine
 
 WORKDIR /usr/src/app/
 ENV NODE_ENV=production

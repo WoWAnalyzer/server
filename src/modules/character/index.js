@@ -59,14 +59,14 @@ async function getCharacterFromBlizzardApi(region, realm, name) {
 
   const characterMediaResponse = await BlizzardApi.fetchCharacterMedia(region, realm, name);
   const characterMediaData = JSON.parse(characterMediaResponse);
+  console.log(characterMediaData)
   if (!characterMediaData) {
     throw new Error('Invalid character media response received');
   }
-  let thumbnailAsset = characterMediaData.assets && characterMediaData.assets.find(entry => entry.key === 'avatar');
+  const thumbnailAsset = characterMediaData.avatar_url;
   if(!thumbnailAsset) {
     throw new Error('Invalid character media response received');
   }
-  thumbnailAsset = thumbnailAsset.value;
 
   const characterSpecializationsResponse = await BlizzardApi.fetchCharacterSpecializations(region, realm, name);
   const characterSpecializationsData = JSON.parse(characterSpecializationsResponse);

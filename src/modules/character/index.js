@@ -109,7 +109,7 @@ async function getCharacterFromBlizzardApi(region, realm, name) {
   }
 
   const currentSpec = characterSpecializationsData.specializations.find(it => it.specialization.name === currentSpecName);
-  if (currentSpec) {
+  if (currentSpec && currentSpec.talents) {
     json.talents = currentSpec.talents.map(it => it.column_index).join('');
   }
 

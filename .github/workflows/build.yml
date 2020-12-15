@@ -21,4 +21,4 @@ jobs:
       - run: yarn test:once --maxWorkers=2
       - run: docker build --tag wowanalyzer-server .
       - run: bash .github/workflows/deploy.sh
-        if: github.event_name != 'pull_request' && github.repository == 'wowanalyzer/wowanalyzer'
+        if: github.event_name != 'pull_request' && github.repository == 'wowanalyzer/server'

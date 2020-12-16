@@ -1,7 +1,8 @@
-import Express from 'express';
+import express from 'express';
 import compression from 'compression';
 import BodyParser from 'body-parser';
 import fs from 'fs';
+import 'express-async-errors';
 
 import { createServer as createMetricsServer } from 'helpers/metrics';
 
@@ -16,7 +17,7 @@ process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 const appDirectory = fs.realpathSync(process.cwd());
 loadDotEnv(appDirectory);
 
-const app = Express();
+const app = express();
 configureSentry(app);
 app.use(compression());
 app.use(BodyParser.urlencoded({ extended: false }));

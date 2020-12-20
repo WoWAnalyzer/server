@@ -2,7 +2,7 @@ import Express from 'express';
 import Sequelize from 'sequelize';
 import * as Sentry from '@sentry/node';
 
-import BlizzardCommunityApi from 'helpers/BlizzardCommunityApi';
+import BlizzardApi from 'helpers/BlizzardApi';
 
 import models from '../../models';
 
@@ -24,24 +24,39 @@ function send404(res) {
   res.sendStatus(404);
 }
 
+// TODO: Store result in DB
+// TODO: Send only 1 locale to client and clean up the response
+// TODO: Refresh automatically after x time
+// TODO: Only update lastSeenAt once an hour to reduce DB load
+
+async function fetchSpell(spellId) {
+  const [spellData, spellMediaData] = await Promise.all([
+    BlizzardApi.fetchSpell(spellId),
+    BlizzardApi.fetchSpellMedia(spellId)
+  ]);
+  const spell = JSON.parse(spellData);
+  const spellMedia = JSON.parse(spellMediaData);
+
+  return {
+    spell,
+    spellMedia,
+  }
+}
+
 async function proxySpellApi(res, spellId) {
   try {
-    const response = await BlizzardCommunityApi.fetchSpell(spellId);
-    const json = JSON.parse(response);
+    const { spell, spellMedia } = await fetchSpell(spellId)
+    const json = {
+      spell,
+      spellMedia,
+    }
     sendJson(res, json);
     return json;
   } catch (error) {
     const { statusCode, message, response } = error;
     console.log('REQUEST', 'Error fetching Spell', statusCode, message);
     const body = response ? response.body : null;
-    // Ignore 404 - Spell not found errors. We check for the text so this doesn't silently break when the API endpoint changes.
-    // Example body of good 404:
-    // {
-    //   "status": "nok",
-    //   "reason": "unable to get spell information."
-    // }
-    const isSpellNotFoundError = statusCode === 404 && body && body.includes('unable to get spell information.');
-    if (isSpellNotFoundError) {
+    if (statusCode === 404) {
       send404(res);
     } else {
       Sentry.captureException(error);

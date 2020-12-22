@@ -42,4 +42,4 @@ async function wipeExpiredCharacters() {
 }
 
 // run the job every day at 00:00
-export const wipeExpiredCharactersJob = new CronJob('0 0 * * * *', wipeExpiredCharacters);
+export const wipeExpiredCharactersJob = new CronJob('0 0 0 * * *', wipeExpiredCharacters);

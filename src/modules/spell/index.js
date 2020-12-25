@@ -1,5 +1,6 @@
-import Express from 'express';
 import * as Sentry from '@sentry/node';
+import Express from 'express';
+import { Sequelize } from 'sequelize';
 
 import BlizzardApi from 'helpers/BlizzardApi';
 
@@ -7,6 +8,7 @@ import models from '../../models';
 
 const Spell = models.Spell;
 const DEFAULT_LOCALE = 'en_US'
+const REFRESH_INTERVAL = 86400 // no point making this very long, the rate limit is high enough
 
 /**
  * Fetches Spell info(name and icon) from the battle net API.
@@ -19,6 +21,7 @@ function sendJson(res, json) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.send(json);
 }
+
 function send404(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.sendStatus(404);
@@ -29,7 +32,7 @@ function send404(res) {
 async function fetchSpell(spellId) {
   const [spellData, spellMediaData] = await Promise.all([
     BlizzardApi.fetchSpell(spellId),
-    BlizzardApi.fetchSpellMedia(spellId)
+    BlizzardApi.fetchSpellMedia(spellId),
   ]);
   const spell = JSON.parse(spellData);
   const spellMedia = JSON.parse(spellMediaData);
@@ -39,13 +42,16 @@ async function fetchSpell(spellId) {
     spellMedia,
   }
 }
+
 async function updateSpell(id) {
   try {
+    console.log('SPELL', 'Fetching spell', id)
     const { spell, spellMedia } = await fetchSpell(id)
-    return await Spell.create({
+    return await Spell.upsert({
       id: id,
       name: JSON.stringify(spell.name),
       icon: spellMedia.assets.find(asset => asset.key === 'icon').value,
+      createdAt: Sequelize.fn('NOW'),
     })
   } catch (error) {
     if (error.statusCode === 404) {
@@ -55,14 +61,22 @@ async function updateSpell(id) {
     }
   }
 }
+
 async function getSpell(id) {
-  let spell = await Spell.findByPk(id);
+  const spell = await Spell.findByPk(id);
   if (spell) {
+    const age = (new Date() - spell.createdAt) / 1000
+    if (age > REFRESH_INTERVAL) {
+      // Background update, show stale data meanwhile (nothing probably changed)
+      updateSpell(id)
+    }
+
     return spell
   }
 
-  return updateSpell(id)
+  return await updateSpell(id)
 }
+
 function sendSpell(res, { id, name, icon }, locale) {
   const nameObject = JSON.parse(name)
   sendJson(res, {

@@ -6,7 +6,9 @@
   "main": "src/index.js",
   "scripts": {
     "start": "yarn migrate && nodemon --exec babel-node src/index.js",
-    "migrate": "node --harmony node_modules/sequelize-cli/lib/sequelize db:migrate --config src/config/database.js",
+    "migrate": "yarn sequelize db:migrate --config src/config/database.js",
+    "migrate:undo": "yarn sequelize db:migrate:undo --config src/config/database.js",
+    "migrate:create": "yarn sequelize migration:generate --name",
     "test": "jest --watchAll",
     "test:once": "jest",
     "build": "babel -d build --ignore __mocks__ src && node ./config/postbuild.js",

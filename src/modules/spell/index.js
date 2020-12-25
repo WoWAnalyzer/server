@@ -1,5 +1,4 @@
 import Express from 'express';
-import Sequelize from 'sequelize';
 import * as Sentry from '@sentry/node';
 
 import BlizzardApi from 'helpers/BlizzardApi';
@@ -7,6 +6,7 @@ import BlizzardApi from 'helpers/BlizzardApi';
 import models from '../../models';
 
 const Spell = models.Spell;
+const DEFAULT_LOCALE = 'en_US'
 
 /**
  * Fetches Spell info(name and icon) from the battle net API.
@@ -24,10 +24,7 @@ function send404(res) {
   res.sendStatus(404);
 }
 
-// TODO: Store result in DB
-// TODO: Send only 1 locale to client and clean up the response
 // TODO: Refresh automatically after x time
-// TODO: Only update lastSeenAt once an hour to reduce DB load
 
 async function fetchSpell(spellId) {
   const [spellData, spellMediaData] = await Promise.all([
@@ -42,57 +39,62 @@ async function fetchSpell(spellId) {
     spellMedia,
   }
 }
-
-async function proxySpellApi(res, spellId) {
+async function updateSpell(id) {
   try {
-    const { spell, spellMedia } = await fetchSpell(spellId)
-    const json = {
-      spell,
-      spellMedia,
-    }
-    sendJson(res, json);
-    return json;
+    const { spell, spellMedia } = await fetchSpell(id)
+    return await Spell.create({
+      id: id,
+      name: JSON.stringify(spell.name),
+      icon: spellMedia.assets.find(asset => asset.key === 'icon').value,
+    })
   } catch (error) {
-    const { statusCode, message, response } = error;
-    console.log('REQUEST', 'Error fetching Spell', statusCode, message);
-    const body = response ? response.body : null;
-    if (statusCode === 404) {
-      send404(res);
+    if (error.statusCode === 404) {
+      return null
     } else {
-      Sentry.captureException(error);
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.status(statusCode || 500);
-      sendJson(res, {
-        error: 'Blizzard API error',
-        message: body || error.message,
-      });
+      throw error
     }
-    return null;
   }
 }
-async function storeSpell({ id, name, icon }) {
-  await Spell.upsert({
+async function getSpell(id) {
+  let spell = await Spell.findByPk(id);
+  if (spell) {
+    return spell
+  }
+
+  return updateSpell(id)
+}
+function sendSpell(res, { id, name, icon }, locale) {
+  const nameObject = JSON.parse(name)
+  sendJson(res, {
     id,
-    name,
+    name: nameObject[locale] || nameObject[DEFAULT_LOCALE],
     icon,
-    lastSeenAt: Sequelize.fn('NOW'),
-  });
+  })
 }
 
 const router = Express.Router();
 router.get('/i/spell/:id([0-9]+)', async (req, res) => {
   const { id } = req.params;
-  let spell = await Spell.findByPk(id);
-  if (spell) {
-    sendJson(res, spell);
-    spell.update({
-      lastSeenAt: Sequelize.fn('NOW'),
-    });
-  } else {
-    spell = await proxySpellApi(res, id);
+  const locale = req.query.locale || DEFAULT_LOCALE
+  try {
+    let spell = await getSpell(id);
     if (spell) {
-      storeSpell(spell);
+      sendSpell(res, spell, locale);
+    } else {
+      send404(res);
     }
+  } catch (error) {
+    const { statusCode, message, response } = error;
+    console.log('REQUEST', 'Error fetching Spell', statusCode, message);
+    const body = response ? response.body : null;
+    Sentry.captureException(error);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.status(statusCode || 500);
+    sendJson(res, {
+      error: 'Blizzard API error',
+      message: body || error.message,
+    });
   }
 });
+
 export default router;

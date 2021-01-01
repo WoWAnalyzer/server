@@ -90,7 +90,17 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
     const region = this._getRegion(regionCode);
 
     return this._fetchApi(region, 'item', `/data/wow/item/${encodeURIComponent(id)}`, {
-      'namespace': `static-${region}`,
+      namespace: `static-${region}`,
+      locale: undefined, // without specifying one locale we get strings for all locales
+    });
+  }
+
+  async fetchItemMedia(id, regionCode = REGIONS.US) {
+    const region = this._getRegion(regionCode);
+
+    return this._fetchApi(region, 'item', `/data/wow/media/item/${encodeURIComponent(id)}`, {
+      namespace: `static-${region}`,
+      locale: undefined, // without specifying one locale we get strings for all locales
     });
   }
 

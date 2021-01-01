@@ -56,10 +56,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    heartOfAzeroth: {
-      type: DataTypes.JSON,
-      allowNull: true,
-    },
     blizzardUpdatedAt: {
       type: DataTypes.DATE,
       allowNull: true,

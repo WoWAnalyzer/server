@@ -28,22 +28,10 @@ class BlizzardCommunityApi { // TODO: extends ExternalApi that provides a generi
     [REGIONS.KR]: 'ko_KR',
   };
 
-  async fetchCharacter(regionCode, realm, name, fields) {
-    const region = this._getRegion(regionCode);
-
-    return this._fetchCommunityApi(region, 'character', `${encodeURIComponent(realm)}/${encodeURIComponent(name)}`, {
-      fields,
-    });
-  }
   async fetchItem(id, regionCode = REGIONS.US) {
     const region = this._getRegion(regionCode);
 
     return this._fetchCommunityApi(region, 'item', encodeURIComponent(id));
-  }
-  async fetchSpell(id, regionCode = REGIONS.US) {
-    const region = this._getRegion(regionCode);
-
-    return this._fetchCommunityApi(region, 'spell', encodeURIComponent(id));
   }
 
   // region Internals
@@ -108,7 +96,7 @@ class BlizzardCommunityApi { // TODO: extends ExternalApi that provides a generi
       // we'll be making several requests, so pool connections
       forever: true,
       // ms after which to abort the request, when a character is uncached it's not uncommon to take ~2sec
-      timeout: 5000, // TODO: Set to 4000 when EU's latency is fixed and average request is below 4 sec
+      timeout: 4000,
       // The Blizzard API isn't very reliable in its HTTP codes, so we're very liberal
       shouldRetry: error => error.statusCode !== HTTP_CODES.NOT_FOUND,
       onBeforeAttempt: () => {

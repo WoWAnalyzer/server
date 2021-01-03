@@ -33,7 +33,7 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
     const region = this._getRegion(regionCode);
     const realmSlug = this._getRealmSlug(realm);
     return this._fetchApi(region, 'guild', `/data/wow/guild/${encodeURIComponent(realmSlug)}/${encodeURIComponent(nameSlug)}`, {
-      'namespace': `profile-${region}`,
+      namespace: `profile-${region}`,
     });
   }
 
@@ -42,7 +42,7 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
     const realmSlug = this._getRealmSlug(realm);
 
     return this._fetchApi(region, 'character', `/profile/wow/character/${encodeURIComponent(realmSlug)}/${encodeURIComponent(name.toLowerCase())}`, {
-      'namespace': `profile-${region}`,
+      namespace: `profile-${region}`,
     });
   }
 
@@ -51,7 +51,7 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
     const realmSlug = this._getRealmSlug(realm);
 
     return this._fetchApi(region, 'character-equipment', `/profile/wow/character/${encodeURIComponent(realmSlug)}/${encodeURIComponent(name.toLowerCase())}/equipment`, {
-      'namespace': `profile-${region}`,
+      namespace: `profile-${region}`,
     });
   }
 
@@ -60,7 +60,7 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
     const realmSlug = this._getRealmSlug(realm);
 
     return this._fetchApi(region, 'character-media', `/profile/wow/character/${encodeURIComponent(realmSlug)}/${encodeURIComponent(name.toLowerCase())}/character-media`, {
-      'namespace': `profile-${region}`,
+      namespace: `profile-${region}`,
     });
   }
 
@@ -69,8 +69,21 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
     const realmSlug = this._getRealmSlug(realm);
 
     return this._fetchApi(region, 'character-specializations', `/profile/wow/character/${encodeURIComponent(realmSlug)}/${encodeURIComponent(name.toLowerCase())}/specializations`, {
-      'namespace': `profile-${region}`,
+      namespace: `profile-${region}`,
     });
+  }
+
+  async fetchSpell(spellId) {
+    return this._fetchApi('US', 'spell', `/data/wow/spell/${spellId}`, {
+      namespace: 'static-us',
+      locale: undefined, // without specifying one locale we get strings for all locales
+    })
+  }
+  async fetchSpellMedia(spellId) {
+    return this._fetchApi('US', 'spell', `/data/wow/media/spell/${spellId}`, {
+      namespace: 'static-us',
+      locale: undefined, // without specifying one locale we get strings for all locales
+    })
   }
 
   // region Internals
@@ -145,7 +158,7 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
       // we'll be making several requests, so pool connections
       forever: true,
       // ms after which to abort the request, when a character is uncached it's not uncommon to take ~2sec
-      timeout: 5000, // TODO: Set to 4000 when EU's latency is fixed and average request is below 4 sec
+      timeout: 4000,
       // The Blizzard API isn't very reliable in its HTTP codes, so we're very liberal
       shouldRetry: error => error.statusCode !== HTTP_CODES.NOT_FOUND,
       onBeforeAttempt: () => {

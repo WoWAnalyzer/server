@@ -47,7 +47,7 @@ async function updateSpell(id) {
   try {
     console.log('SPELL', 'Fetching spell', id)
     const { spell, spellMedia } = await fetchSpell(id)
-    return await Spell.upsert({
+    await Spell.upsert({
       id: id,
       name: JSON.stringify(spell.name),
       icon: spellMedia.assets.find(asset => asset.key === 'icon').value,
@@ -74,7 +74,9 @@ async function getSpell(id) {
     return spell
   }
 
-  return await updateSpell(id)
+  await updateSpell(id)
+
+  return await Spell.findByPk(id);
 }
 
 function sendSpell(res, { id, name, icon }, locale) {

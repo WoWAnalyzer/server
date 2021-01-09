@@ -44,7 +44,7 @@ async function updateItem(itemId) {
 	try {
 		console.log('ITEM', 'Fetching item', itemId)
 		const {item, itemMedia} = await fetchItem(itemId)
-		return await Item.upsert({
+		await Item.upsert({
 			id: itemId,
 			name: JSON.stringify(item.name),
 			icon: itemMedia.assets.find(asset => asset.key === 'icon').value,
@@ -71,7 +71,9 @@ async function getItem(itemId) {
 		return item
 	}
 
-	return await updateItem(itemId)
+	await updateItem(itemId)
+
+	return Item.findByPk(itemId);
 }
 
 function sendItem(res, {itemId, name, icon}, locale) {

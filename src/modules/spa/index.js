@@ -66,7 +66,7 @@ const PROXY_CONFIG = {
       // duration.
       //
       // Excessive logging to further investigate.
-      console.warn('Encountered 404 for request', userReq, userRes, proxyReq, proxyRes)
+      console.warn('Encountered 404 for request', userReq.url, userReq, userRes, proxyReq, proxyRes)
 
       return {
         ...headers,

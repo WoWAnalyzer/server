@@ -36,6 +36,46 @@ const PROXY_CONFIG = {
         break;
     }
   },
+  userResHeaderDecorator: (headers, userReq, userRes, proxyReq, proxyRes) => {
+    if (userRes.statusCode === 404) {
+      // In very rare situations, we may receive a request to a chunk that
+      // returns a 404. CloudFlare would then cache this at an edge server,
+      // breaking part of the site for users near that server. We need to set
+      // cache-control to no-cache to avoid CF from caching these responses.
+      // See https://community.cloudflare.com/t/how-to-avoid-caching-404/196262/15
+      //
+      // Important note: it's only possible to have a reference to a chunk from
+      // the index.html when it already exists, since we do not scale the SPA
+      // host and it always contains a single artifact with the index and all
+      // associated chunks. This means it should be impossible to have chunks
+      // that are referenced from the current index.html return a 404. And yet
+      // it happens.
+      //
+      // The only theory left that is feasible is that since we scale the
+      // server, server1 may be talking with SPAv2 which gives us the new
+      // index.html while server2 is talking to SPAv1. Docker load balances this
+      // (round robin), so if server2 is used for the chunk, it may 404.
+      // This is hard to believe too, since we haven't implemented 0 second
+      // downtime redeploys yet, and currently v1 is always stopped before v2
+      // is started.
+      //
+      // Maybe the SPA nginx is broken?
+      //
+      // In any case, this header should minimize the impact of this issue as CF
+      // should automatically purge the 404 chunk from cache within a short
+      // duration.
+      //
+      // Excessive logging to further investigate.
+      console.warn('Encountered 404 for request', userReq, userRes, proxyReq, proxyRes)
+
+      return {
+        ...headers,
+        'Cache-Control': 'No-Cache'
+      }
+    }
+
+    return headers
+  }
 };
 
 router.get('/CharacterJourney.mp4', function (req, res) {

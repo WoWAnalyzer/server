@@ -117,7 +117,7 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
       const tokenRequest = await this._fetch(url, {
         category: 'token',
         region,
-      });
+      }, 'POST');
 
       const tokenData = JSON.parse(tokenRequest);
       this._accessTokenByRegion[region] = tokenData.access_token;
@@ -147,7 +147,7 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
     }
   }
 
-  _fetch(url, metricLabels) {
+  _fetch(url, metricLabels, method) {
     let commitMetric;
     return retryingRequest({
       url,
@@ -155,6 +155,7 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
         'User-Agent': process.env.USER_AGENT,
       },
       gzip: true,
+      method: method || 'GET',
       // we'll be making several requests, so pool connections
       forever: true,
       // ms after which to abort the request, when a character is uncached it's not uncommon to take ~2sec

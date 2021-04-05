@@ -8,7 +8,6 @@ import RegionNotSupportedError from 'helpers/RegionNotSupportedError';
 
 import models from '../../models';
 
-const HEART_OF_AZEROTH_ID = 158075;
 const Character = models.Character;
 
 /**
@@ -94,19 +93,6 @@ async function getCharacterFromBlizzardApi(region, realm, name) {
     createdAt: new Date(),
     lastSeenAt: characterData.last_login_timestamp ? new Date(characterData.last_login_timestamp) : null
   };
-
-  const heartOfAzeroth = characterEquipmentData.equipped_items.find(it => it.item && it.item.id === HEART_OF_AZEROTH_ID);
-  if (heartOfAzeroth) {
-    json.heartOfAzeroth = {
-      id: heartOfAzeroth.item.id,
-      name: heartOfAzeroth.name,
-      icon: "inv_heartofazeroth", // HoA always has the same icon
-      quality: 6, // HoA is always an Artefact
-      itemLevel: heartOfAzeroth.level && heartOfAzeroth.level.value,
-      timewalkerLevel: null, // not returned by the new Blizzard API
-      azeriteItemLevel: heartOfAzeroth.azerite_details && heartOfAzeroth.azerite_details.level.value
-    };
-  }
 
   const currentSpec = characterSpecializationsData.specializations.find(it => it.specialization.name === currentSpecName);
   if (currentSpec && currentSpec.talents) {

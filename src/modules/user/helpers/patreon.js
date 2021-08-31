@@ -1,12 +1,12 @@
-import request from 'helpers/request';
+import request from "helpers/request";
 
 export async function fetchRawPatreonProfile(accessToken) {
   // return require('./__fixtures__/patreon-active.json');
   const jsonString = await request({
-    url: 'https://api.patreon.com/oauth2/api/current_user',
+    url: "https://api.patreon.com/oauth2/v2/identity?include=memberships&fields%5Buser%5D=full_name,image_url&fields%5Bmember%5D=patron_status,currently_entitled_amount_cents",
     headers: {
-      'User-Agent': 'WoWAnalyzer.com API',
-      'Authorization': `Bearer ${accessToken}`,
+      "User-Agent": "WoWAnalyzer.com API",
+      Authorization: `Bearer ${accessToken}`,
     },
     gzip: true, // using gzip was quicker for WCL, so maybe here too
   });
@@ -16,14 +16,12 @@ export function parseProfile(profile) {
   const id = profile.data.id;
   const name = profile.data.attributes.full_name;
   const avatar = profile.data.attributes.image_url;
-  // There is NO pledge data available at all as soon as a user deletes their pledge, so we're unable to give them their Premium for the remainder of the month. This isn't something we can fix, so all we can do is apologize to our users. :(
-  const pledge = profile.included && profile.included.find(item => item.type === 'pledge');
-  const pledgeAmount = pledge ? pledge.attributes.amount_cents : null;
-
-  // Reward info needs to get the reward id from the pledge's relations. Since we don't use it yet, I didn't want to spend time implementing it.
-  // const reward = profile.included && profile.included.find(item => item.type === 'reward');
-  // const rewardId = reward ? reward.id : null;
-  // const rewardTitle = reward ? reward.attributes.title : null;
+  const member =
+    profile.included && profile.included.find((item) => item.type === "member");
+  const pledgeAmount =
+    member && member.attributes.patron_status === "active_patron"
+      ? member.attributes.currently_entitled_amount_cents
+      : null;
 
   return {
     id,
@@ -38,8 +36,12 @@ export async function fetchPatreonProfile(accessToken, refreshToken) {
   return parseProfile(patreonProfile);
 }
 export async function refreshPatreonProfile(user) {
-  console.log(`Refreshing Patreon data for ${user.data.name} (${user.patreonId})`);
-  const patreonProfile = await fetchPatreonProfile(user.data.patreon.accessToken);
+  console.log(
+    `Refreshing Patreon data for ${user.data.name} (${user.patreonId})`
+  );
+  const patreonProfile = await fetchPatreonProfile(
+    user.data.patreon.accessToken
+  );
 
   // We shouldn't have to wait for this update to finish, since it immediately updates the local object's data
   user.update({

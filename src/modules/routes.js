@@ -9,6 +9,7 @@ router.use(require('./guild').default);
 router.use(require('./item').default);
 router.use(require('./spell').default);
 router.use(require('./thirdparty').default);
+router.use(require('./healthcheck').default);
 
 // When requesting an API endpoint that doesn't exist we shouldn't fallback to the app
 router.get('/i/*', function (req, res) {

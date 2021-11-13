@@ -130,12 +130,12 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
 
   async _fetchAccessToken(region) {
     if (!this._accessTokenByRegion[region]) {
-      const url = `https://${region.toLowerCase()}.battle.net/oauth/token?grant_type=client_credentials&client_id=${process.env.BATTLE_NET_API_CLIENT_ID}&client_secret=${process.env.BATTLE_NET_API_CLIENT_SECRET}`;
+      const url = `https://${region.toLowerCase()}.battle.net/oauth/token?client_id=${process.env.BATTLE_NET_API_CLIENT_ID}&client_secret=${process.env.BATTLE_NET_API_CLIENT_SECRET}`;
 
       const tokenRequest = await this._fetch(url, {
         category: 'token',
         region,
-      });
+      }, { method: 'POST', form: { grant_type: 'client_credentials' }});
 
       const tokenData = JSON.parse(tokenRequest);
       this._accessTokenByRegion[region] = tokenData.access_token;
@@ -165,7 +165,7 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
     }
   }
 
-  _fetch(url, metricLabels) {
+  _fetch(url, metricLabels, options = {}) {
     let commitMetric;
     return retryingRequest({
       url,
@@ -198,6 +198,7 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
       onSuccess: () => {
         commitMetric({ statusCode: 200 });
       },
+      ...options,
     });
   }
   // endregion

@@ -18,7 +18,6 @@ async function updateCharacter(character) {
         spec: null,
         role: null,
         talents: null,
-        heartOfAzeroth: null
     }, {
         where: {
             id: character.id,

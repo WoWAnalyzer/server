@@ -86,6 +86,24 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
     })
   }
 
+  async fetchItem(id, regionCode = REGIONS.US) {
+    const region = this._getRegion(regionCode);
+
+    return this._fetchApi(region, 'item', `/data/wow/item/${encodeURIComponent(id)}`, {
+      namespace: `static-${region}`,
+      locale: undefined, // without specifying one locale we get strings for all locales
+    });
+  }
+
+  async fetchItemMedia(id, regionCode = REGIONS.US) {
+    const region = this._getRegion(regionCode);
+
+    return this._fetchApi(region, 'item', `/data/wow/media/item/${encodeURIComponent(id)}`, {
+      namespace: `static-${region}`,
+      locale: undefined, // without specifying one locale we get strings for all locales
+    });
+  }
+
   // region Internals
   _accessTokenByRegion = {};
 
@@ -112,12 +130,12 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
 
   async _fetchAccessToken(region) {
     if (!this._accessTokenByRegion[region]) {
-      const url = `https://${region.toLowerCase()}.battle.net/oauth/token?grant_type=client_credentials&client_id=${process.env.BATTLE_NET_API_CLIENT_ID}&client_secret=${process.env.BATTLE_NET_API_CLIENT_SECRET}`;
+      const url = `https://${region.toLowerCase()}.battle.net/oauth/token?client_id=${process.env.BATTLE_NET_API_CLIENT_ID}&client_secret=${process.env.BATTLE_NET_API_CLIENT_SECRET}`;
 
       const tokenRequest = await this._fetch(url, {
         category: 'token',
         region,
-      }, 'POST');
+      }, { method: 'POST', form: { grant_type: 'client_credentials' }});
 
       const tokenData = JSON.parse(tokenRequest);
       this._accessTokenByRegion[region] = tokenData.access_token;
@@ -147,7 +165,7 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
     }
   }
 
-  _fetch(url, metricLabels, method) {
+  _fetch(url, metricLabels, options = {}) {
     let commitMetric;
     return retryingRequest({
       url,
@@ -155,7 +173,7 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
         'User-Agent': process.env.USER_AGENT,
       },
       gzip: true,
-      method: method || 'GET',
+      method: 'GET',
       // we'll be making several requests, so pool connections
       forever: true,
       // ms after which to abort the request, when a character is uncached it's not uncommon to take ~2sec
@@ -181,6 +199,7 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
       onSuccess: () => {
         commitMetric({ statusCode: 200 });
       },
+      ...options,
     });
   }
   // endregion

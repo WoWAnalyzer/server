@@ -21,7 +21,7 @@ if (process.env.NODE_ENV === 'development' && !process.env.PATREON_CLIENT_ID) {
       clientID: process.env.PATREON_CLIENT_ID,
       clientSecret: process.env.PATREON_CLIENT_SECRET,
       callbackURL: process.env.PATREON_CALLBACK_URL,
-      scope: 'users pledges-to-me',
+      scope: 'identity',
       skipUserProfile: true, // less unnecessary and duplicate code if we manually do this the same everywhere
     },
     async function (accessToken, refreshToken, _, done) {

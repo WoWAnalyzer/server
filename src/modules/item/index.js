@@ -46,7 +46,7 @@ async function updateItem(itemId) {
 		const {item, itemMedia} = await fetchItem(itemId)
 		await Item.upsert({
 			id: itemId,
-			name: JSON.stringify(item.name),
+			name: JSON.stringify(item.name[DEFAULT_LOCALE]),
 			icon: itemMedia.assets.find(asset => asset.key === 'icon').value,
 			createdAt: Sequelize.fn('NOW'),
 		})
@@ -87,10 +87,10 @@ function sendItem(res, {itemId, name, icon}, locale) {
 
 const router = Express.Router();
 router.get('/i/item/:id([0-9]+)', async (req, res) => {
-	const {itemId} = req.params;
+	const {id} = req.params;
 	const locale = req.query.locale || DEFAULT_LOCALE
 	try {
-		let item = await getItem(itemId)
+		let item = await getItem(id)
 		if (item) {
 			sendItem(res, item, locale);
 		} else {

@@ -1,6 +1,6 @@
 import querystring from 'querystring';
 
-import { blizzardApiResponseLatencyHistogram } from 'helpers/metrics';
+import {blizzardApiResponseLatencyHistogram} from 'helpers/metrics';
 import RequestTimeoutError from './request/RequestTimeoutError';
 import RequestSocketTimeoutError from './request/RequestSocketTimeoutError';
 import RequestConnectionResetError from './request/RequestConnectionResetError';
@@ -77,13 +77,13 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
     return this._fetchApi('US', 'spell', `/data/wow/spell/${spellId}`, {
       namespace: 'static-us',
       locale: undefined, // without specifying one locale we get strings for all locales
-    })
+    });
   }
   async fetchSpellMedia(spellId) {
     return this._fetchApi('US', 'spell', `/data/wow/media/spell/${spellId}`, {
       namespace: 'static-us',
       locale: undefined, // without specifying one locale we get strings for all locales
-    })
+    });
   }
 
   async fetchItem(id, regionCode = REGIONS.US) {
@@ -115,7 +115,7 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
   }
 
   _getRealmSlug(realmName) {
-    return realmName.replace(/'/g, "").replace(/\s/g, "-").toLowerCase();
+    return realmName.replace(/'/g, '').replace(/\s/g, '-').toLowerCase();
   }
 
   _getRegion(regionCode) {
@@ -135,7 +135,7 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
       const tokenRequest = await this._fetch(url, {
         category: 'token',
         region,
-      }, { method: 'POST', form: { grant_type: 'client_credentials' }});
+      }, {method: 'POST', form: {grant_type: 'client_credentials'}});
 
       const tokenData = JSON.parse(tokenRequest);
       this._accessTokenByRegion[region] = tokenData.access_token;
@@ -151,7 +151,7 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
       ...query,
     });
 
-    const metricLabels = { category: operation, region };
+    const metricLabels = {category: operation, region};
     try {
       return await this._fetch(url, metricLabels);
     } catch (err) {
@@ -179,25 +179,25 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
       // ms after which to abort the request, when a character is uncached it's not uncommon to take ~2sec
       timeout: 4000,
       // The Blizzard API isn't very reliable in its HTTP codes, so we're very liberal
-      shouldRetry: error => error.statusCode !== HTTP_CODES.NOT_FOUND,
+      shouldRetry: (error) => error.statusCode !== HTTP_CODES.NOT_FOUND,
       onBeforeAttempt: () => {
         commitMetric = blizzardApiResponseLatencyHistogram.startTimer(metricLabels);
       },
-      onFailedAttempt: async err => {
+      onFailedAttempt: async (err) => {
         if (err instanceof RequestTimeoutError) {
-          commitMetric({ statusCode: 'timeout' });
+          commitMetric({statusCode: 'timeout'});
         } else if (err instanceof RequestSocketTimeoutError) {
-          commitMetric({ statusCode: 'socket timeout' });
+          commitMetric({statusCode: 'socket timeout'});
         } else if (err instanceof RequestConnectionResetError) {
-          commitMetric({ statusCode: 'connection reset' });
+          commitMetric({statusCode: 'connection reset'});
         } else if (err instanceof RequestUnknownError) {
-          commitMetric({ statusCode: 'unknown' });
+          commitMetric({statusCode: 'unknown'});
         } else {
-          commitMetric({ statusCode: err.statusCode });
+          commitMetric({statusCode: err.statusCode});
         }
       },
       onSuccess: () => {
-        commitMetric({ statusCode: 200 });
+        commitMetric({statusCode: 200});
       },
       ...options,
     });
@@ -209,9 +209,9 @@ export default new BlizzardApi();
 
 export function getFactionFromType(type) {
   switch (type) {
-    case "HORDE":
+    case 'HORDE':
       return 1;
-    case "ALLIANCE":
+    case 'ALLIANCE':
       return 2;
     default:
       return null;
@@ -220,9 +220,9 @@ export function getFactionFromType(type) {
 
 export function getCharacterGender(type) {
   switch (type) {
-    case "MALE":
+    case 'MALE':
       return 0;
-    case "FEMALE":
+    case 'FEMALE':
       return 1;
     default:
       return null;
@@ -231,67 +231,67 @@ export function getCharacterGender(type) {
 
 export function getCharacterRole(className, specName) {
   const rolesByClassAndSpec = {
-    "death knight": {
-      "blood": "TANK",
-      "frost": "DPS",
-      "unholy": "DPS",
+    'death knight': {
+      'blood': 'TANK',
+      'frost': 'DPS',
+      'unholy': 'DPS',
     },
-    "demon hunter": {
-      "havoc": "DPS",
-      "vengeance": "TANK",
+    'demon hunter': {
+      'havoc': 'DPS',
+      'vengeance': 'TANK',
     },
-    "druid": {
-      "balance": "DPS",
-      "feral": "DPS",
-      "guardian": "TANK",
-      "restoration": "HEALING",
+    'druid': {
+      'balance': 'DPS',
+      'feral': 'DPS',
+      'guardian': 'TANK',
+      'restoration': 'HEALING',
     },
-    "hunter": {
-      "beast mastery": "DPS",
-      "marksmanship": "DPS",
-      "survival": "DPS",
+    'hunter': {
+      'beast mastery': 'DPS',
+      'marksmanship': 'DPS',
+      'survival': 'DPS',
     },
-    "mage": {
-      "arcane": "DPS",
-      "fire": "DPS",
-      "frost": "DPS",
+    'mage': {
+      'arcane': 'DPS',
+      'fire': 'DPS',
+      'frost': 'DPS',
     },
-    "monk": {
-      "brewmaster": "TANK",
-      "mistweaver": "HEALING",
-      "windwalker": "DPS",
+    'monk': {
+      'brewmaster': 'TANK',
+      'mistweaver': 'HEALING',
+      'windwalker': 'DPS',
     },
-    "paladin": {
-      "holy": "HEALING",
-      "protection": "TANK",
-      "retribution": "DPS",
+    'paladin': {
+      'holy': 'HEALING',
+      'protection': 'TANK',
+      'retribution': 'DPS',
     },
-    "priest": {
-      "discipline": "HEALING",
-      "holy": "HEALING",
-      "shadow": "DPS",
+    'priest': {
+      'discipline': 'HEALING',
+      'holy': 'HEALING',
+      'shadow': 'DPS',
     },
-    "rogue": {
-      "assassination": "DPS",
-      "outlaw": "DPS",
-      "subtlety": "DPS",
+    'rogue': {
+      'assassination': 'DPS',
+      'outlaw': 'DPS',
+      'subtlety': 'DPS',
     },
-    "shaman": {
-      "elemental": "DPS",
-      "enhancement": "DPS",
-      "restoration": "HEALING",
+    'shaman': {
+      'elemental': 'DPS',
+      'enhancement': 'DPS',
+      'restoration': 'HEALING',
     },
-    "warlock": {
-      "affliction": "DPS",
-      "demonology": "DPS",
-      "destruction": "DPS",
+    'warlock': {
+      'affliction': 'DPS',
+      'demonology': 'DPS',
+      'destruction': 'DPS',
     },
-    "warrior": {
-      "arms": "DPS",
-      "fury": "DPS",
-      "protection": "TANK",
-    }
-  }
+    'warrior': {
+      'arms': 'DPS',
+      'fury': 'DPS',
+      'protection': 'TANK',
+    },
+  };
 
   return className && specName && rolesByClassAndSpec[className.toLowerCase()][specName.toLowerCase()];
 }

@@ -57,7 +57,8 @@
     "eslint": "^8.3.0",
     "eslint-config-google": "^0.14.0",
     "jest": "^24.5.0",
-    "nodemon": "^1.18.10"
+    "nodemon": "^1.18.10",
+    "prettier": "2.5.0"
   },
   "jest": {
     "testEnvironment": "node",

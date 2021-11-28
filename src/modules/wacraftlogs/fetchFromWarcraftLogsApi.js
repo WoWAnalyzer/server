@@ -1,6 +1,6 @@
 import querystring from 'querystring';
 
-import { warcraftLogsApiResponseLatencyHistogram } from 'helpers/metrics';
+import {warcraftLogsApiResponseLatencyHistogram} from 'helpers/metrics';
 import RequestTimeoutError from 'helpers/request/RequestTimeoutError';
 import RequestSocketTimeoutError from 'helpers/request/RequestSocketTimeoutError';
 import RequestConnectionResetError from 'helpers/request/RequestConnectionResetError';
@@ -47,21 +47,21 @@ export default async function fetchFromWarcraftLogsApi(path, query, apiKey, metr
       onBeforeAttempt: () => {
         commitMetric = warcraftLogsApiResponseLatencyHistogram.startTimer(metricLabels);
       },
-      onFailedAttempt: err => {
+      onFailedAttempt: (err) => {
         if (err instanceof RequestTimeoutError) {
-          commitMetric({ statusCode: 'timeout' });
+          commitMetric({statusCode: 'timeout'});
         } else if (err instanceof RequestSocketTimeoutError) {
-          commitMetric({ statusCode: 'socket timeout' });
+          commitMetric({statusCode: 'socket timeout'});
         } else if (err instanceof RequestConnectionResetError) {
-          commitMetric({ statusCode: 'connection reset' });
+          commitMetric({statusCode: 'connection reset'});
         } else if (err instanceof RequestUnknownError) {
-          commitMetric({ statusCode: 'unknown' });
+          commitMetric({statusCode: 'unknown'});
         } else {
-          commitMetric({ statusCode: err.statusCode });
+          commitMetric({statusCode: err.statusCode});
         }
       },
       onSuccess: () => {
-        commitMetric({ statusCode: 200 });
+        commitMetric({statusCode: 200});
       },
     });
 

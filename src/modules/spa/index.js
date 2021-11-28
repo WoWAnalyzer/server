@@ -21,16 +21,16 @@ const PROXY_HOST = process.env.SPA_PROXY_HOST;
 const PROXY_CONFIG = {
   // It takes the proxy about 1 second to realize the server is down if it's down. Since the SPA will always be right next to it and only hosts static content, it should normally respond within a few milliseconds or something is up.
   timeout: 1100,
-  proxyReqPathResolver: req => req.originalUrl,
+  proxyReqPathResolver: (req) => req.originalUrl,
   proxyErrorHandler: function(err, res, next) {
     switch (err && err.code) {
       case 'ENOTFOUND': // this may occur in production because we access other servers through DNS names that can not be found if the server is down
       case 'ECONNREFUSED':
         console.error(err.message);
         return res
-          .status(503)
-          .header('Retry-After', 11)
-          .sendFile(path.join(__dirname + '/503.html'));
+            .status(503)
+            .header('Retry-After', 11)
+            .sendFile(path.join(__dirname + '/503.html'));
       default:
         next(err);
         break;
@@ -66,19 +66,19 @@ const PROXY_CONFIG = {
       // duration.
       //
       // Excessive logging to further investigate.
-      console.warn('Encountered 404 for request', userReq.url, userReq, userRes, proxyReq, proxyRes)
+      console.warn('Encountered 404 for request', userReq.url, userReq, userRes, proxyReq, proxyRes);
 
       return {
         ...headers,
-        'Cache-Control': 'No-Cache'
-      }
+        'Cache-Control': 'No-Cache',
+      };
     }
 
-    return headers
-  }
+    return headers;
+  },
 };
 
-router.get('/CharacterJourney.mp4', function (req, res) {
+router.get('/CharacterJourney.mp4', function(req, res) {
   return res.status(200).sendFile(path.join(__dirname + '/CharacterJourney.mp4'));
 });
 router.get([
@@ -102,14 +102,14 @@ router.get([
 
       // This is a bit hacky, better solution welcome
       response = response
-        .replace('property="og:title" content="WoWAnalyzer"', `property="og:title" content="WoWAnalyzer: ${escapeHtml(title)}"`)
-        .replace('<title>WoWAnalyzer</title>', `<title>WoWAnalyzer: ${escapeHtml(title)}</title>`);
+          .replace('property="og:title" content="WoWAnalyzer"', `property="og:title" content="WoWAnalyzer: ${escapeHtml(title)}"`)
+          .replace('<title>WoWAnalyzer</title>', `<title>WoWAnalyzer: ${escapeHtml(title)}</title>`);
     }
 
     return response;
   },
 }));
-router.get('*', function (req, res, next) {
+router.get('*', function(req, res, next) {
   if (req.originalUrl === '/') {
     // Make sure the root isn't cached to avoid browsers caching old versions of the app
     nocache(req, res, next);

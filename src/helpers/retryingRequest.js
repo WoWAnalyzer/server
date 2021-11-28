@@ -5,7 +5,7 @@ import sleep from './sleep';
 const defaultOptions = {
   maxAttempts: 3,
   reattemptDelay: 300,
-  shouldRetry: err => err instanceof RequestError,
+  shouldRetry: (err) => err instanceof RequestError,
   onBeforeAttempt: null,
   onSuccess: null,
   onFailedAttempt: null,

@@ -5,7 +5,7 @@ import * as Sentry from '@sentry/node';
 
 import models from 'models';
 
-import fetchFromWarcraftLogsApi, { WCL_REPORT_DOES_NOT_EXIST_HTTP_CODE } from './fetchFromWarcraftLogsApi';
+import fetchFromWarcraftLogsApi, {WCL_REPORT_DOES_NOT_EXIST_HTTP_CODE} from './fetchFromWarcraftLogsApi';
 import WarcraftLogsApiError from './WarcraftLogsApiError';
 
 const WclApiResponse = models.WclApiResponse;
@@ -54,7 +54,7 @@ const router = Express.Router();
 const relativePath = '/i/v1/';
 const relativePathLength = relativePath.length;
 router.get(`${relativePath}*`, async (req, res) => {
-  const resolve = jsonString => {
+  const resolve = (jsonString) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.send(jsonString);
@@ -100,7 +100,7 @@ router.get(`${relativePath}*`, async (req, res) => {
       console.log('cache SKIP', cacheKey);
     }
 
-    const wclResponse = await fetchFromWarcraftLogsApi(path, query, apiKey, { category: determineCategory(path) });
+    const wclResponse = await fetchFromWarcraftLogsApi(path, query, apiKey, {category: determineCategory(path)});
     // noinspection JSIgnoredPromiseFromCall No need to wait for this as it doesn't affect the result.
     cacheWclApiResponse(cacheKey, wclResponse);
     resolve(wclResponse);

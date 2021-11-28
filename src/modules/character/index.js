@@ -1,9 +1,9 @@
 import Express from 'express';
-import { Sequelize, Op } from 'sequelize';
+import {Sequelize, Op} from 'sequelize';
 import * as Sentry from '@sentry/node';
-import { StatusCodeError } from 'request-promise-native/errors';
+import {StatusCodeError} from 'request-promise-native/errors';
 
-import BlizzardApi, { getFactionFromType, getCharacterGender, getCharacterRole } from 'helpers/BlizzardApi';
+import BlizzardApi, {getFactionFromType, getCharacterGender, getCharacterRole} from 'helpers/BlizzardApi';
 import RegionNotSupportedError from 'helpers/RegionNotSupportedError';
 
 import models from '../../models';
@@ -39,7 +39,7 @@ function send404(res) {
 
 const characterIdFromThumbnailRegex = /\/([0-9]+)-/;
 function getCharacterId(thumbnail) {
-  const [,characterId] = characterIdFromThumbnailRegex.exec(thumbnail);
+  const [, characterId] = characterIdFromThumbnailRegex.exec(thumbnail);
   return characterId;
 }
 
@@ -61,8 +61,8 @@ async function getCharacterFromBlizzardApi(region, realm, name) {
   if (!characterMediaData) {
     throw new Error('Invalid character media response received');
   }
-  const thumbnailAsset = characterMediaData.avatar_url || characterMediaData.assets.find(asset => asset.key === 'avatar').value;
-  if(!thumbnailAsset) {
+  const thumbnailAsset = characterMediaData.avatar_url || characterMediaData.assets.find((asset) => asset.key === 'avatar').value;
+  if (!thumbnailAsset) {
     throw new Error('Invalid character media response received');
   }
 
@@ -91,12 +91,12 @@ async function getCharacterFromBlizzardApi(region, realm, name) {
     blizzardUpdatedAt: new Date(),
     // creation date isn't returned by the new Blizzard API, and this is a required column in the DB
     createdAt: new Date(),
-    lastSeenAt: characterData.last_login_timestamp ? new Date(characterData.last_login_timestamp) : null
+    lastSeenAt: characterData.last_login_timestamp ? new Date(characterData.last_login_timestamp) : null,
   };
 
-  const currentSpec = characterSpecializationsData.specializations.find(it => it.specialization.name === currentSpecName);
+  const currentSpec = characterSpecializationsData.specializations.find((it) => it.specialization.name === currentSpecName);
   if (currentSpec && currentSpec.talents) {
-    json.talents = currentSpec.talents.map(it => it.column_index).join('');
+    json.talents = currentSpec.talents.map((it) => it.column_index).join('');
   }
 
   return json;
@@ -114,7 +114,7 @@ async function getStoredCharacter(id, realm, region, name) {
         realm,
         // Prevent returning characters that were wiped through the background
         // job. See: jobs/characters.js
-        class: { [Op.ne]: null }
+        class: {[Op.ne]: null},
       },
     });
   }
@@ -184,7 +184,7 @@ function cors(req, res, next) {
   next();
 }
 router.get('/i/character/:id([0-9]+)', cors, async (req, res) => {
-  const { id } = req.params;
+  const {id} = req.params;
   const character = await getStoredCharacter(id);
   if (!character) {
     // No character found, and we can't find a character by just its id, so this is all we can do.
@@ -199,13 +199,13 @@ router.get('/i/character/:id([0-9]+)', cors, async (req, res) => {
   fetchCharacter(character.region, character.realm, character.name);
 });
 router.get('/i/character/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})', cors, async (req, res) => {
-  const { region, realm, name } = req.params;
+  const {region, realm, name} = req.params;
 
   const storedCharacter = await getStoredCharacter(null, realm, region, name);
 
   let responded = false;
-  //checking if thumbnail exists in cache here because Parses.js will throw up without it here
-  //If it's not here then it's better to wait on the API call to come back
+  // checking if thumbnail exists in cache here because Parses.js will throw up without it here
+  // If it's not here then it's better to wait on the API call to come back
   if (storedCharacter && storedCharacter.thumbnail) {
     sendJson(res, storedCharacter);
     responded = true;
@@ -215,7 +215,7 @@ router.get('/i/character/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})', co
   fetchCharacter(region, realm, name, !responded ? res : null);
 });
 router.get('/i/character/:id([0-9]+)/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})', cors, async (req, res) => {
-  const { id, region, realm, name } = req.params;
+  const {id, region, realm, name} = req.params;
   const storedCharacter = await getStoredCharacter(id);
   let responded = false;
   // Old cache entries won't have the thumbnail value. We want the the thumbnail value. So don't respond yet if it's missing.

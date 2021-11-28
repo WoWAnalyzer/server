@@ -1,6 +1,6 @@
 import querystring from 'querystring';
 
-import {warcraftLogsApiResponseLatencyHistogram} from 'helpers/metrics';
+import { warcraftLogsApiResponseLatencyHistogram } from 'helpers/metrics';
 import RequestTimeoutError from 'helpers/request/RequestTimeoutError';
 import RequestSocketTimeoutError from 'helpers/request/RequestSocketTimeoutError';
 import RequestConnectionResetError from 'helpers/request/RequestConnectionResetError';
@@ -49,19 +49,19 @@ export default async function fetchFromWarcraftLogsApi(path, query, apiKey, metr
       },
       onFailedAttempt: (err) => {
         if (err instanceof RequestTimeoutError) {
-          commitMetric({statusCode: 'timeout'});
+          commitMetric({ statusCode: 'timeout' });
         } else if (err instanceof RequestSocketTimeoutError) {
-          commitMetric({statusCode: 'socket timeout'});
+          commitMetric({ statusCode: 'socket timeout' });
         } else if (err instanceof RequestConnectionResetError) {
-          commitMetric({statusCode: 'connection reset'});
+          commitMetric({ statusCode: 'connection reset' });
         } else if (err instanceof RequestUnknownError) {
-          commitMetric({statusCode: 'unknown'});
+          commitMetric({ statusCode: 'unknown' });
         } else {
-          commitMetric({statusCode: err.statusCode});
+          commitMetric({ statusCode: err.statusCode });
         }
       },
       onSuccess: () => {
-        commitMetric({statusCode: 200});
+        commitMetric({ statusCode: 200 });
       },
     });
 
@@ -73,7 +73,11 @@ export default async function fetchFromWarcraftLogsApi(path, query, apiKey, metr
     // Decoding JSON takes a long time, grabbing the first character is near instant and has high accuracy.
     const firstCharacter = jsonString.substr(0, 1);
     if (firstCharacter !== '{' && firstCharacter !== '[') {
-      throw new WarcraftLogsApiError(500, 'Corrupt Warcraft Logs API response received', jsonString);
+      throw new WarcraftLogsApiError(
+        500,
+        'Corrupt Warcraft Logs API response received',
+        jsonString,
+      );
     }
 
     return jsonString;

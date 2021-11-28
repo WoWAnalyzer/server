@@ -24,24 +24,30 @@ describe('controllers/user', () => {
     expect(rootPath.middleware).toContain(requireAuthenticated);
   });
   it('passes along user info', async () => {
-    await action({
-      user: {
-        data: {
-          name: 'Peter',
-          avatar: 'http://example.com',
+    await action(
+      {
+        user: {
+          data: {
+            name: 'Peter',
+            avatar: 'http://example.com',
+          },
         },
       },
-    }, response);
+      response,
+    );
     expect(response.json).toHaveBeenCalledTimes(1);
     expect(response.json.mock.calls[0][0].name).toEqual('Peter');
     expect(response.json.mock.calls[0][0].avatar).toEqual('http://example.com');
   });
   it('is a regular user by default', async () => {
-    await action({
-      user: {
-        data: {},
+    await action(
+      {
+        user: {
+          data: {},
+        },
       },
-    }, response);
+      response,
+    );
     expect(response.json).toHaveBeenCalledTimes(1);
     expect(response.json.mock.calls[0][0].premium).toBeFalsy();
   });
@@ -71,7 +77,7 @@ describe('controllers/user', () => {
       expect(response.json).toHaveBeenCalledTimes(1);
       expect(response.json.mock.calls[0][0].patreon.premium).toBeTruthy();
     });
-    it('doesn\'t give Premium when logged in but not pledged', async () => {
+    it("doesn't give Premium when logged in but not pledged", async () => {
       await action(createRequest(null), response);
       expect(response.json).toHaveBeenCalledTimes(1);
       expect(response.json.mock.calls[0][0].premium).toBeFalsy();
@@ -87,7 +93,7 @@ describe('controllers/user', () => {
         const patreonHelpers = require('./helpers/patreon');
         expect(patreonHelpers.refreshPatreonProfile).toHaveBeenCalledTimes(1);
       });
-      it('doesn\'t refresh when the data is fresh', async () => {
+      it("doesn't refresh when the data is fresh", async () => {
         await action(createRequest(100, new Date()), response);
 
         const patreonHelpers = require('./helpers/patreon');
@@ -149,15 +155,17 @@ describe('controllers/user', () => {
       await action(createRequest(new Date(Date.UTC(2032, 5, 10, 11, 20, 15, 0))), response);
       expect(response.json).toHaveBeenCalledTimes(1);
       // This test will fail when the GitHub premium duration is changed, will have to be updated simultaneously.
-      expect(JSON.stringify(response.json.mock.calls[0][0].github.expires)).toBe('"2032-07-10T11:20:15.000Z"');
+      expect(JSON.stringify(response.json.mock.calls[0][0].github.expires)).toBe(
+        '"2032-07-10T11:20:15.000Z"',
+      );
     });
-    it('doesn\'t give Premium when logged in but not pledged', async () => {
+    it("doesn't give Premium when logged in but not pledged", async () => {
       await action(createRequest(null), response);
       expect(response.json).toHaveBeenCalledTimes(1);
       expect(response.json.mock.calls[0][0].premium).toBeFalsy();
     });
     it('expires Premium the Premium duration', async () => {
-      const {GITHUB_COMMIT_PREMIUM_DURATION} = require('./user');
+      const { GITHUB_COMMIT_PREMIUM_DURATION } = require('./user');
 
       const now = new Date();
 
@@ -186,7 +194,7 @@ describe('controllers/user', () => {
         const githubHelpers = require('./helpers/github');
         expect(githubHelpers.refreshGitHubLastContribution).toHaveBeenCalledTimes(1);
       });
-      it('doesn\'t refresh when the data is fresh', async () => {
+      it("doesn't refresh when the data is fresh", async () => {
         await action(createRequest(100, new Date()), response);
 
         const githubHelpers = require('./helpers/github');

@@ -43,7 +43,7 @@ async function fetchItem(itemId) {
 async function updateItem(itemId) {
   try {
     console.log('ITEM', 'Fetching item', itemId);
-    const {item, itemMedia} = await fetchItem(itemId);
+    const { item, itemMedia } = await fetchItem(itemId);
     await Item.upsert({
       id: itemId,
       name: JSON.stringify(item.name[DEFAULT_LOCALE]),
@@ -76,7 +76,7 @@ async function getItem(itemId) {
   return Item.findByPk(itemId);
 }
 
-function sendItem(res, {itemId, name, icon}, locale) {
+function sendItem(res, { itemId, name, icon }, locale) {
   const nameObject = JSON.parse(name);
   sendJson(res, {
     itemId,
@@ -87,7 +87,7 @@ function sendItem(res, {itemId, name, icon}, locale) {
 
 const router = Express.Router();
 router.get('/i/item/:id([0-9]+)', async (req, res) => {
-  const {id} = req.params;
+  const { id } = req.params;
   const locale = req.query.locale || DEFAULT_LOCALE;
   try {
     const item = await getItem(id);
@@ -97,7 +97,7 @@ router.get('/i/item/:id([0-9]+)', async (req, res) => {
       send404(res);
     }
   } catch (error) {
-    const {statusCode, message, response} = error;
+    const { statusCode, message, response } = error;
     console.log('REQUEST', 'Error fetching Item', statusCode, message);
     const body = response ? response.body : null;
     Sentry.captureException(error);

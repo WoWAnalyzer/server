@@ -4,7 +4,7 @@ import BodyParser from 'body-parser';
 import fs from 'fs';
 import 'express-async-errors';
 
-import {createServer as createMetricsServer} from 'helpers/metrics';
+import { createServer as createMetricsServer } from 'helpers/metrics';
 
 import loadDotEnv from './config/env';
 import configureSentry from './configureSentry';
@@ -20,7 +20,7 @@ loadDotEnv(appDirectory);
 const app = express();
 configureSentry(app);
 app.use(compression());
-app.use(BodyParser.urlencoded({extended: false}));
+app.use(BodyParser.urlencoded({ extended: false }));
 configureSession(app);
 configurePassport(app);
 app.use(routes);

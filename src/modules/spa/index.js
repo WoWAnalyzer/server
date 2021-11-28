@@ -22,15 +22,15 @@ const PROXY_CONFIG = {
   // It takes the proxy about 1 second to realize the server is down if it's down. Since the SPA will always be right next to it and only hosts static content, it should normally respond within a few milliseconds or something is up.
   timeout: 1100,
   proxyReqPathResolver: (req) => req.originalUrl,
-  proxyErrorHandler: function(err, res, next) {
+  proxyErrorHandler: function (err, res, next) {
     switch (err && err.code) {
       case 'ENOTFOUND': // this may occur in production because we access other servers through DNS names that can not be found if the server is down
       case 'ECONNREFUSED':
         console.error(err.message);
         return res
-            .status(503)
-            .header('Retry-After', 11)
-            .sendFile(path.join(__dirname + '/503.html'));
+          .status(503)
+          .header('Retry-After', 11)
+          .sendFile(path.join(__dirname + '/503.html'));
       default:
         next(err);
         break;
@@ -66,7 +66,14 @@ const PROXY_CONFIG = {
       // duration.
       //
       // Excessive logging to further investigate.
-      console.warn('Encountered 404 for request', userReq.url, userReq, userRes, proxyReq, proxyRes);
+      console.warn(
+        'Encountered 404 for request',
+        userReq.url,
+        userReq,
+        userRes,
+        proxyReq,
+        proxyRes,
+      );
 
       return {
         ...headers,
@@ -78,45 +85,59 @@ const PROXY_CONFIG = {
   },
 };
 
-router.get('/CharacterJourney.mp4', function(req, res) {
+router.get('/CharacterJourney.mp4', function (req, res) {
   return res.status(200).sendFile(path.join(__dirname + '/CharacterJourney.mp4'));
 });
-router.get([
-  '/report/:reportCode([A-Za-z0-9]+)/:fightId([0-9]+)?:fightName(-[^/]+)?/:playerId([0-9]+)?:playerName(-[^/]{2,})?/:tab([A-Za-z0-9-]+)?',
-  // This is the same route as above but without `playerId` since this breaks links without player id and with special characters such as: https://wowanalyzer.com/report/Y8GbgcB6d9ptX3K7/7-Mythic+Demonic+Inquisition+-+Wipe+1+(5:15)/Rootzô
-  '/report/:reportCode([A-Za-z0-9]+)/:fightId([0-9]+)?:fightName(-[^/]+)?/:playerName([^/]{2,})?/:tab([A-Za-z0-9-]+)?',
-], nocache, proxy(PROXY_HOST, {
-  ...PROXY_CONFIG,
-  userResDecorator: (proxyRes, proxyResData, userReq, userRes) => {
-    let response = proxyResData.toString('utf8');
-    if (userReq.params.fightName) {
-      const fightName = decodeURI(userReq.params.fightName.substr(1).replace(/\+/g, ' '));
-      const playerName = userReq.params.playerName && decodeURI(userReq.params.playerName);
+router.get(
+  [
+    '/report/:reportCode([A-Za-z0-9]+)/:fightId([0-9]+)?:fightName(-[^/]+)?/:playerId([0-9]+)?:playerName(-[^/]{2,})?/:tab([A-Za-z0-9-]+)?',
+    // This is the same route as above but without `playerId` since this breaks links without player id and with special characters such as: https://wowanalyzer.com/report/Y8GbgcB6d9ptX3K7/7-Mythic+Demonic+Inquisition+-+Wipe+1+(5:15)/Rootzô
+    '/report/:reportCode([A-Za-z0-9]+)/:fightId([0-9]+)?:fightName(-[^/]+)?/:playerName([^/]{2,})?/:tab([A-Za-z0-9-]+)?',
+  ],
+  nocache,
+  proxy(PROXY_HOST, {
+    ...PROXY_CONFIG,
+    userResDecorator: (proxyRes, proxyResData, userReq, userRes) => {
+      let response = proxyResData.toString('utf8');
+      if (userReq.params.fightName) {
+        const fightName = decodeURI(userReq.params.fightName.substr(1).replace(/\+/g, ' '));
+        const playerName = userReq.params.playerName && decodeURI(userReq.params.playerName);
 
-      let title = '';
-      if (playerName) {
-        title = `${fightName} by ${playerName}`;
-      } else {
-        title = fightName;
+        let title = '';
+        if (playerName) {
+          title = `${fightName} by ${playerName}`;
+        } else {
+          title = fightName;
+        }
+
+        // This is a bit hacky, better solution welcome
+        response = response
+          .replace(
+            'property="og:title" content="WoWAnalyzer"',
+            `property="og:title" content="WoWAnalyzer: ${escapeHtml(title)}"`,
+          )
+          .replace(
+            '<title>WoWAnalyzer</title>',
+            `<title>WoWAnalyzer: ${escapeHtml(title)}</title>`,
+          );
       }
 
-      // This is a bit hacky, better solution welcome
-      response = response
-          .replace('property="og:title" content="WoWAnalyzer"', `property="og:title" content="WoWAnalyzer: ${escapeHtml(title)}"`)
-          .replace('<title>WoWAnalyzer</title>', `<title>WoWAnalyzer: ${escapeHtml(title)}</title>`);
+      return response;
+    },
+  }),
+);
+router.get(
+  '*',
+  function (req, res, next) {
+    if (req.originalUrl === '/') {
+      // Make sure the root isn't cached to avoid browsers caching old versions of the app
+      nocache(req, res, next);
+    } else {
+      // Cache away! (maybe we should even encourage this more)
+      next();
     }
-
-    return response;
   },
-}));
-router.get('*', function(req, res, next) {
-  if (req.originalUrl === '/') {
-    // Make sure the root isn't cached to avoid browsers caching old versions of the app
-    nocache(req, res, next);
-  } else {
-    // Cache away! (maybe we should even encourage this more)
-    next();
-  }
-}, proxy(PROXY_HOST, PROXY_CONFIG));
+  proxy(PROXY_HOST, PROXY_CONFIG),
+);
 
 export default router;

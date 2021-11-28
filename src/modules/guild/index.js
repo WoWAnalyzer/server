@@ -1,9 +1,9 @@
 import Express from 'express';
 import Sequelize from 'sequelize';
 import * as Sentry from '@sentry/node';
-import {StatusCodeError} from 'request-promise-native/errors';
+import { StatusCodeError } from 'request-promise-native/errors';
 
-import BlizzardApi, {getFactionFromType} from 'helpers/BlizzardApi';
+import BlizzardApi, { getFactionFromType } from 'helpers/BlizzardApi';
 import RegionNotSupportedError from 'helpers/RegionNotSupportedError';
 
 import models from '/models';
@@ -42,10 +42,25 @@ async function getGuildFromBlizzardApi(region, realm, nameSlug) {
     memberCount: guildData.member_count,
     crest: {
       emblemId: crest.emblem.id,
-      emblemColor: [crest.emblem.color.rgba.r, crest.emblem.color.rgba.g, crest.emblem.color.rgba.b, crest.emblem.color.rgba.a],
+      emblemColor: [
+        crest.emblem.color.rgba.r,
+        crest.emblem.color.rgba.g,
+        crest.emblem.color.rgba.b,
+        crest.emblem.color.rgba.a,
+      ],
       borderId: crest.border.id,
-      borderColor: [crest.border.color.rgba.r, crest.border.color.rgba.g, crest.border.color.rgba.b, crest.border.color.rgba.a],
-      backgroundColor: [crest.background.color.rgba.r, crest.background.color.rgba.g, crest.background.color.rgba.b, crest.background.color.rgba.a],
+      borderColor: [
+        crest.border.color.rgba.r,
+        crest.border.color.rgba.g,
+        crest.border.color.rgba.b,
+        crest.border.color.rgba.a,
+      ],
+      backgroundColor: [
+        crest.background.color.rgba.r,
+        crest.background.color.rgba.g,
+        crest.background.color.rgba.b,
+        crest.background.color.rgba.a,
+      ],
     },
   };
 }
@@ -121,18 +136,22 @@ function cors(req, res, next) {
 }
 
 const router = Express.Router();
-router.get('/i/guild/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})', cors, async (req, res) => {
-  const {region, realm, name} = req.params;
-  // Because guild name is used as an index, slug it for consistency
-  const nameSlug = name.replace(/\s/g, '-').toLowerCase();
-  const storedGuild = await getStoredGuild(realm, region, nameSlug);
+router.get(
+  '/i/guild/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})',
+  cors,
+  async (req, res) => {
+    const { region, realm, name } = req.params;
+    // Because guild name is used as an index, slug it for consistency
+    const nameSlug = name.replace(/\s/g, '-').toLowerCase();
+    const storedGuild = await getStoredGuild(realm, region, nameSlug);
 
-  let responded = false;
-  if (storedGuild) {
-    sendJson(res, storedGuild);
-    responded = true;
-  }
-  fetchGuild(region, realm, nameSlug, !responded ? res : null);
-});
+    let responded = false;
+    if (storedGuild) {
+      sendJson(res, storedGuild);
+      responded = true;
+    }
+    fetchGuild(region, realm, nameSlug, !responded ? res : null);
+  },
+);
 
 export default router;

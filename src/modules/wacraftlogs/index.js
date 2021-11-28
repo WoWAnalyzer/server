@@ -5,7 +5,9 @@ import * as Sentry from '@sentry/node';
 
 import models from 'models';
 
-import fetchFromWarcraftLogsApi, {WCL_REPORT_DOES_NOT_EXIST_HTTP_CODE} from './fetchFromWarcraftLogsApi';
+import fetchFromWarcraftLogsApi, {
+  WCL_REPORT_DOES_NOT_EXIST_HTTP_CODE,
+} from './fetchFromWarcraftLogsApi';
 import WarcraftLogsApiError from './WarcraftLogsApiError';
 
 const WclApiResponse = models.WclApiResponse;
@@ -21,7 +23,15 @@ const MAX_CACHE_ENTRY_SIZE = 16 * 1024 * 1024; // 16 MB
 async function cacheWclApiResponse(cacheKey, content) {
   const contentLength = content.length;
   if (contentLength > MAX_CACHE_ENTRY_SIZE) {
-    console.debug('Not caching', cacheKey, 'since it\'s too large.', (contentLength / 1024 / 1024).toFixed(1), 'MB (max is', MAX_CACHE_ENTRY_SIZE / 1024 / 1024, 'MB)');
+    console.debug(
+      'Not caching',
+      cacheKey,
+      "since it's too large.",
+      (contentLength / 1024 / 1024).toFixed(1),
+      'MB (max is',
+      MAX_CACHE_ENTRY_SIZE / 1024 / 1024,
+      'MB)',
+    );
     return;
   }
   // Regardless of already existing, set `numAccesses` to 1 since we want to
@@ -100,7 +110,9 @@ router.get(`${relativePath}*`, async (req, res) => {
       console.log('cache SKIP', cacheKey);
     }
 
-    const wclResponse = await fetchFromWarcraftLogsApi(path, query, apiKey, {category: determineCategory(path)});
+    const wclResponse = await fetchFromWarcraftLogsApi(path, query, apiKey, {
+      category: determineCategory(path),
+    });
     // noinspection JSIgnoredPromiseFromCall No need to wait for this as it doesn't affect the result.
     cacheWclApiResponse(cacheKey, wclResponse);
     resolve(wclResponse);

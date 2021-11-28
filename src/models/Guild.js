@@ -24,7 +24,8 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    created: { // When the guild was actually created, different than database timestamp createdAt
+    created: {
+      // When the guild was actually created, different than database timestamp createdAt
       type: DataTypes.DATE,
       allowNull: false,
     },

@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/node';
 import Express from 'express';
-import {Sequelize} from 'sequelize';
+import { Sequelize } from 'sequelize';
 import fetch from 'node-fetch';
 import FormData from 'form-data';
 
@@ -39,21 +39,19 @@ async function fetchToken() {
       Accept: 'application/json',
       Authorization:
         'Basic ' +
-        Buffer.from(
-            `${process.env.WCL_CLIENT_ID}:${process.env.WCL_SECRET}`,
-        ).toString('base64'),
+        Buffer.from(`${process.env.WCL_CLIENT_ID}:${process.env.WCL_SECRET}`).toString('base64'),
     },
     body: requestBody,
   });
   if (!response.ok) {
     throw new Error(
-        `Failed to fetch hook status: ${response.status} ${
-          response.statusText
-        }. Body: ${await response.text()}`,
+      `Failed to fetch hook status: ${response.status} ${
+        response.statusText
+      }. Body: ${await response.text()}`,
     );
   }
 
-  const {access_token} = await response.json();
+  const { access_token } = await response.json();
 
   return access_token;
 }
@@ -72,19 +70,16 @@ function resetToken() {
 
 const wclQuery = async (graphQlQuery, attempt = 0) => {
   const token = await getToken();
-  const response = await fetch(
-      'https://www.warcraftlogs.com/api/v2/client',
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: graphQlQuery,
-        }),
-      },
-  );
+  const response = await fetch('https://www.warcraftlogs.com/api/v2/client', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      query: graphQlQuery,
+    }),
+  });
   if (!response.ok) {
     if (response.status === 401 && attempt === 0) {
       // Token expired - retry once.
@@ -93,20 +88,20 @@ const wclQuery = async (graphQlQuery, attempt = 0) => {
     }
 
     throw new Error(
-        `Failed to query WCL: ${response.status} ${
-          response.statusText
-        }. Body: ${await response.text()}`,
+      `Failed to query WCL: ${response.status} ${
+        response.statusText
+      }. Body: ${await response.text()}`,
     );
   }
 
-  const {data} = await response.json();
+  const { data } = await response.json();
 
   return data;
 };
 
 async function fetchSpell(spellId) {
   const {
-    gameData: {ability},
+    gameData: { ability },
   } = await wclQuery(`
     {
       gameData {
@@ -160,7 +155,7 @@ async function getSpell(id) {
   return await updateSpell(id);
 }
 
-function sendSpell(res, {id, name, icon}, locale) {
+function sendSpell(res, { id, name, icon }, locale) {
   sendJson(res, {
     id,
     name,
@@ -170,7 +165,7 @@ function sendSpell(res, {id, name, icon}, locale) {
 
 const router = Express.Router();
 router.get('/i/spell/:id([0-9]+)', async (req, res) => {
-  const {id} = req.params;
+  const { id } = req.params;
   const locale = req.query.locale || DEFAULT_LOCALE;
   try {
     const spell = await getSpell(id);
@@ -180,7 +175,7 @@ router.get('/i/spell/:id([0-9]+)', async (req, res) => {
       send404(res);
     }
   } catch (error) {
-    const {statusCode, message, response} = error;
+    const { statusCode, message, response } = error;
     console.log('REQUEST', 'Error fetching Spell', statusCode, message);
     console.error(error);
     const body = response ? response.body : null;

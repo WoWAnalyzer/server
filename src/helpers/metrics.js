@@ -19,18 +19,20 @@ export const warcraftLogsApiResponseLatencyHistogram = new Prometheus.Histogram(
 
 export function createServer() {
   const port = process.env.METRICS_PORT || 8000;
-  http.createServer((req, res) => {
-    if (req.url === '/metrics') {
-      const register = Prometheus.register;
-      res.setHeader('Connection', 'close');
-      res.setHeader('Content-Type', register.contentType);
-      res.write(register.metrics());
+  http
+    .createServer((req, res) => {
+      if (req.url === '/metrics') {
+        const register = Prometheus.register;
+        res.setHeader('Connection', 'close');
+        res.setHeader('Content-Type', register.contentType);
+        res.write(register.metrics());
+        res.end();
+        return;
+      }
+      res.statusCode = 404;
+      res.statusMessage = 'Not found';
       res.end();
-      return;
-    }
-    res.statusCode = 404;
-    res.statusMessage = 'Not found';
-    res.end();
-  }).listen(port);
+    })
+    .listen(port);
   console.log('/metrics is available at port', port);
 }

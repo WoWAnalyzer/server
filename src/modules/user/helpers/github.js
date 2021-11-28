@@ -35,7 +35,9 @@ export async function fetchGitHubLastCommitDate(login) {
 }
 
 export async function refreshGitHubLastContribution(user) {
-  console.log(`Refreshing GitHub data for ${user.data.name} (${user.gitHubId} - ${user.data.github.login})`);
+  console.log(
+    `Refreshing GitHub data for ${user.data.name} (${user.gitHubId} - ${user.data.github.login})`,
+  );
   const lastContribution = await fetchGitHubLastCommitDate(user.data.github.login);
 
   // We shouldn't have to wait for this update to finish, since it immediately updates the local object's data

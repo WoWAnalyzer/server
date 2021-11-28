@@ -1,10 +1,10 @@
 import Express from 'express';
 import Passport from 'passport';
-import {Strategy as PatreonStrategy} from 'passport-patreon';
+import { Strategy as PatreonStrategy } from 'passport-patreon';
 
 import models from 'models';
 
-import {fetchPatreonProfile} from '../helpers/patreon';
+import { fetchPatreonProfile } from '../helpers/patreon';
 
 const User = models.User;
 
@@ -13,10 +13,13 @@ const router = Express.Router();
 if (process.env.NODE_ENV === 'development' && !process.env.PATREON_CLIENT_ID) {
   router.get('/*', (req, res) => {
     res.status(503);
-    res.send('The Patreon OAuth settings have not been configured so this method can not be used at this time.');
+    res.send(
+      'The Patreon OAuth settings have not been configured so this method can not be used at this time.',
+    );
   });
 } else {
-  Passport.use(new PatreonStrategy(
+  Passport.use(
+    new PatreonStrategy(
       {
         clientID: process.env.PATREON_CLIENT_ID,
         clientSecret: process.env.PATREON_CLIENT_SECRET,
@@ -24,7 +27,7 @@ if (process.env.NODE_ENV === 'development' && !process.env.PATREON_CLIENT_ID) {
         scope: 'identity',
         skipUserProfile: true, // less unnecessary and duplicate code if we manually do this the same everywhere
       },
-      async function(accessToken, refreshToken, _, done) {
+      async function (accessToken, refreshToken, _, done) {
         const patreonProfile = await fetchPatreonProfile(accessToken, refreshToken);
 
         if (process.env.NODE_ENV === 'development') {
@@ -49,13 +52,17 @@ if (process.env.NODE_ENV === 'development' && !process.env.PATREON_CLIENT_ID) {
 
         done(null, user);
       },
-  ));
+    ),
+  );
 
   router.get('/', Passport.authenticate('patreon'));
-  router.get('/callback', Passport.authenticate('patreon', {
-    successRedirect: process.env.LOGIN_REDIRECT_LOCATION,
-    failureRedirect: process.env.LOGIN_REDIRECT_LOCATION,
-  }));
+  router.get(
+    '/callback',
+    Passport.authenticate('patreon', {
+      successRedirect: process.env.LOGIN_REDIRECT_LOCATION,
+      failureRedirect: process.env.LOGIN_REDIRECT_LOCATION,
+    }),
+  );
 }
 
 export default router;

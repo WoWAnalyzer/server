@@ -41,11 +41,11 @@ function send404(res) {
   res.sendStatus(404);
 }
 
-const characterIdFromThumbnailRegex = /\/([0-9]+)-/;
-function getCharacterId(thumbnail) {
-  const [, characterId] = characterIdFromThumbnailRegex.exec(thumbnail);
-  return characterId;
-}
+// const characterIdFromThumbnailRegex = /\/([0-9]+)-/;
+// function getCharacterId(thumbnail) {
+//   const [, characterId] = characterIdFromThumbnailRegex.exec(thumbnail);
+//   return characterId;
+// }
 
 async function getCharacterFromBlizzardApi(region, realm, name) {
   const characterResponse = await BlizzardApi.fetchCharacter(region, realm, name);

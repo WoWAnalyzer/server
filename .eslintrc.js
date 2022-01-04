@@ -1,15 +1,16 @@
 module.exports = {
-  'env': {
-    'es2021': true,
-    'node': true,
+  env: {
+    es2021: true,
+    node: true,
   },
-  'extends': [
-    'google',
-  ],
-  'parserOptions': {
-    'ecmaVersion': 13,
-    'sourceType': 'module',
+  extends: ['google', 'plugin:prettier/recommended'],
+  parserOptions: {
+    ecmaVersion: 13,
+    sourceType: 'module',
   },
-  'rules': {
+  rules: {
+    'require-jsdoc': 'off',
+    'valid-jsdoc': 'off',
+    'new-cap': 'off',
   },
 };

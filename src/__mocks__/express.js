@@ -27,7 +27,7 @@ express.Router = jest.fn(() => {
   return router;
 });
 express.__lastRouter = () => {
-  return routers[this.routers.length - 1];
+  return routers[routers.length - 1];
 };
 express.__paths = {};
 

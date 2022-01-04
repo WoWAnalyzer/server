@@ -4,7 +4,7 @@ import { Sequelize } from 'sequelize';
 import fetch from 'node-fetch';
 import FormData from 'form-data';
 
-import BlizzardApi from 'helpers/BlizzardApi';
+// import BlizzardApi from 'helpers/BlizzardApi';
 
 import models from '../models';
 
@@ -51,9 +51,9 @@ async function fetchToken() {
     );
   }
 
-  const { access_token } = await response.json();
+  const { accessToken } = await response.json();
 
-  return access_token;
+  return accessToken;
 }
 let token = null;
 function getToken() {

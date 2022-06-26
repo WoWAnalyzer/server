@@ -33,7 +33,7 @@
     "mariadb": "^2.0.3",
     "moment": "^2.25.3",
     "nanoid": "^2.0.1",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "^2.6.7",
     "passport": "^0.4.0",
     "passport-github": "^1.1.0",
     "passport-patreon": "^1.0.1",

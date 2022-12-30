@@ -290,6 +290,10 @@ export function getCharacterRole(className, specName) {
       "arms": "DPS",
       "fury": "DPS",
       "protection": "TANK",
+    },
+    "evoker": {
+      "preservation": "HEALING",
+      "devastation": "DPS"
     }
   }
 

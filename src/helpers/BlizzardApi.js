@@ -290,7 +290,11 @@ export function getCharacterRole(className, specName) {
       "arms": "DPS",
       "fury": "DPS",
       "protection": "TANK",
-    }
+    },
+    "evoker": {
+      "devastation": "DPS",
+      "preservation": "HEALING",
+    },
   }
 
   return className && specName && rolesByClassAndSpec[className.toLowerCase()][specName.toLowerCase()];

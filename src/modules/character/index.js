@@ -3,7 +3,7 @@ import { Sequelize, Op } from 'sequelize';
 import * as Sentry from '@sentry/node';
 import { StatusCodeError } from 'request-promise-native/errors';
 
-import BlizzardApi, { getFactionFromType, getCharacterGender, getCharacterRole } from 'helpers/BlizzardApi';
+import BlizzardApi, { getFactionFromRace, getFactionFromType, getCharacterGender, getCharacterRole } from 'helpers/BlizzardApi';
 import RegionNotSupportedError from 'helpers/RegionNotSupportedError';
 
 import models from '../../models';
@@ -11,7 +11,7 @@ import models from '../../models';
 const Character = models.Character;
 
 /**
- * Handle requests for character information, and return data from the Blizzard API.
+ * Handle requests for character information, and return data from the Blizzard API or Blizzard Forum (Classic).
  *
  * This takes 3 formats since at different points of the app we know different types of data:
  *
@@ -27,7 +27,7 @@ const Character = models.Character;
  * /EU/Tarren Mill/Mufre - character search
  * This will skip looking for the character and just send the battle.net character data.
  *
- * The caching stratagy being used here is to always return cached data first if it exists. then refresh in the background
+ * The caching strategy being used here is to always return cached data first if it exists. then refresh in the background
  */
 function sendJson(res, json) {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -53,7 +53,7 @@ async function getCharacterFromBlizzardApi(region, realm, name) {
   const characterEquipmentResponse = await BlizzardApi.fetchCharacterEquipment(region, realm, name);
   const characterEquipmentData = JSON.parse(characterEquipmentResponse);
   if (!characterEquipmentData) {
-    throw new Error('Invalid character equipement response received');
+    throw new Error('Invalid character equipment response received');
   }
 
   const characterMediaResponse = await BlizzardApi.fetchCharacterMedia(region, realm, name);
@@ -98,6 +98,41 @@ async function getCharacterFromBlizzardApi(region, realm, name) {
   if (currentSpec && currentSpec.talents) {
     json.talents = currentSpec.talents.map(it => it.column_index).join('');
   }
+
+  return json;
+}
+
+async function getCharacterFromBlizzardForum(guid, region, realm, name) {
+  const characterResponse = await BlizzardApi.fetchClassicCharacter(region, realm, name);
+  const characterData = JSON.parse(characterResponse);
+  if (!characterData) {
+    throw new Error('Invalid character response received');
+  }
+
+  let thumbnailAsset = characterData.user.avatar_template || characterData.assets.find(asset => asset.key === 'avatar_template').value;
+  if (thumbnailAsset) {
+    thumbnailAsset = thumbnailAsset.split('character/')[1];
+    thumbnailAsset = thumbnailAsset.split('?alt=/')[0];
+  }
+
+  const json = {
+    id: guid,
+    region: region.toLowerCase(),
+    realm: realm,
+    name: name,
+    battlegroup: null, // deprecated in the new Blizzard API
+    faction: getFactionFromRace(characterData.user.character.race),
+    class: characterData.user.character.class,
+    race: characterData.user.character.race,
+    gender: null,
+    achievementPoints: characterData.user.character.achievement_points || 0,
+    thumbnail: thumbnailAsset,
+    spec: null,
+    role: null,
+    blizzardUpdatedAt: new Date(),
+    createdAt: new Date(), // Not provided but this is a required DB column
+    lastSeenAt: characterData.user.last_seen_at ? new Date(characterData.user.last_seen_at) : null
+  };
 
   return json;
 }
@@ -177,6 +212,55 @@ async function fetchCharacter(region, realm, name, res = null) {
   }
 }
 
+async function fetchClassicCharacter(guid, region, realm, name, res = null) {
+  try {
+    // noinspection JSIgnoredPromiseFromCall Nothing depends on this, so it's quicker to let it run asynchronous
+    const charFromForum = await getCharacterFromBlizzardForum(guid, region, realm, name);
+    if (res) {
+      sendJson(res, charFromForum);
+    }
+    // noinspection JSIgnoredPromiseFromCall Nothing depends on this, so it's quicker to let it run asynchronous
+    storeCharacter(charFromForum);
+  } catch (error) {
+    const body = error.response ? error.response.body : null;
+
+    // CN Region not supported
+    if (error instanceof RegionNotSupportedError) {
+      // Record the error because we want to know how often this occurs and if it breaks anything
+      Sentry.captureException(error);
+      if (res) {
+        res.status(500);
+        sendJson(res, {
+          error: 'This region is not supported',
+        });
+      }
+      return;
+    }
+
+    // Handle 404: character not found errors.
+    if (error instanceof StatusCodeError) {
+      // We check for the text so this doesn't silently break when the API endpoint changes.
+      const isCharacterNotFoundError = error.statusCode === 404 && body && body.includes('Character not found.');
+      if (isCharacterNotFoundError) {
+        if (res) {
+          send404(res);
+        }
+        return;
+      }
+    }
+
+    // Everything else is unexpected
+    Sentry.captureException(error);
+    if (res) {
+      res.status(error.statusCode || 500);
+      sendJson(res, {
+        error: 'Blizzard Forum error',
+        message: body || error.message,
+      });
+    }
+  }
+}
+
 const router = Express.Router();
 
 function cors(req, res, next) {
@@ -218,7 +302,7 @@ router.get('/i/character/:id([0-9]+)/:region([A-Z]{2})/:realm([^/]{2,})/:name([^
   const { id, region, realm, name } = req.params;
   const storedCharacter = await getStoredCharacter(id);
   let responded = false;
-  // Old cache entries won't have the thumbnail value. We want the the thumbnail value. So don't respond yet if it's missing.
+  // Old cache entries won't have the thumbnail value. We want the thumbnail value. So don't respond yet if it's missing.
   if (storedCharacter && storedCharacter.thumbnail) {
     sendJson(res, storedCharacter);
     responded = true;
@@ -226,6 +310,19 @@ router.get('/i/character/:id([0-9]+)/:region([A-Z]{2})/:realm([^/]{2,})/:name([^
 
   // noinspection JSIgnoredPromiseFromCall
   fetchCharacter(region, realm, name, !responded ? res : null);
+});
+router.get('/i/character/classic/:id([0-9]+)/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})', cors, async (req, res) => {
+  const { id, region, realm, name } = req.params;
+  const storedCharacter = await getStoredCharacter(id);
+  let responded = false;
+  // Old cache entries won't have the thumbnail value. We want the thumbnail value. So don't respond yet if it's missing.
+  if (storedCharacter && storedCharacter.thumbnail) {
+    sendJson(res, storedCharacter);
+    responded = true;
+  }
+
+  // noinspection JSIgnoredPromiseFromCall
+  fetchClassicCharacter(id, region, realm, name, !responded ? res : null);
 });
 
 export default router;

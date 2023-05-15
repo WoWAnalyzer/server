@@ -46,6 +46,11 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
     });
   }
 
+  /**
+   * Blizzard does not expose an Armory for Classic characters, but they expose structured data from the forum about the character, including a thumbnail (which is what we mostly care about).
+   *
+   * This approach is taken from the method that WCL uses for claiming characters and collecting thumbnails for Classic.
+   */
   async fetchClassicCharacter(regionCode, realm, name) {
     const region = this._getRegion(regionCode);
     const realmSlug = this._getRealmSlug(realm);

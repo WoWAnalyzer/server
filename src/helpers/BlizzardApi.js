@@ -46,6 +46,19 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
     });
   }
 
+  /**
+   * Blizzard does not expose an Armory for Classic characters, but they expose structured data from the forum about the character, including a thumbnail (which is what we mostly care about).
+   *
+   * This approach is taken from the method that WCL uses for claiming characters and collecting thumbnails for Classic.
+   */
+  async fetchClassicCharacter(regionCode, realm, name) {
+    const region = this._getRegion(regionCode);
+    const realmSlug = this._getRealmSlug(realm);
+    const encodedUrl = `https://${region.toLowerCase()}.forums.blizzard.com/en/wow/u/` + encodeURIComponent(name) + `-${realmSlug}.json`;
+
+    return this._fetch(encodedUrl);
+  }
+
   async fetchCharacterEquipment(regionCode, realm, name) {
     const region = this._getRegion(regionCode);
     const realmSlug = this._getRealmSlug(realm);
@@ -206,6 +219,33 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
 }
 
 export default new BlizzardApi();
+
+export function getFactionFromRace(race) {
+  switch (race) {
+    case "Blood Elf":
+      return 1;
+    case "Orc":
+      return 1;
+    case "Tauren":
+      return 1;
+    case "Troll":
+      return 1;
+    case "Undead":
+      return 1;
+    case "Draenei":
+      return 2;
+    case "Dwarf":
+      return 2;
+    case "Gnome":
+      return 2;
+    case "Human":
+      return 2;
+    case "Night Elf":
+      return 2;
+    default:
+      return null;
+  }
+}
 
 export function getFactionFromType(type) {
   switch (type) {

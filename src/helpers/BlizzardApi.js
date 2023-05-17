@@ -1,6 +1,8 @@
 import querystring from 'querystring';
 
-import { blizzardApiResponseLatencyHistogram } from 'helpers/metrics';
+import {
+  blizzardApiResponseLatencyHistogram
+} from 'helpers/metrics';
 import RequestTimeoutError from './request/RequestTimeoutError';
 import RequestSocketTimeoutError from './request/RequestSocketTimeoutError';
 import RequestConnectionResetError from './request/RequestConnectionResetError';
@@ -148,7 +150,12 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
       const tokenRequest = await this._fetch(url, {
         category: 'token',
         region,
-      }, { method: 'POST', form: { grant_type: 'client_credentials' }});
+      }, {
+        method: 'POST',
+        form: {
+          grant_type: 'client_credentials'
+        }
+      });
 
       const tokenData = JSON.parse(tokenRequest);
       this._accessTokenByRegion[region] = tokenData.access_token;
@@ -164,7 +171,10 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
       ...query,
     });
 
-    const metricLabels = { category: operation, region };
+    const metricLabels = {
+      category: operation,
+      region
+    };
     try {
       return await this._fetch(url, metricLabels);
     } catch (err) {
@@ -198,19 +208,31 @@ class BlizzardApi { // TODO: extends ExternalApi that provides a generic _fetch 
       },
       onFailedAttempt: async err => {
         if (err instanceof RequestTimeoutError) {
-          commitMetric({ statusCode: 'timeout' });
+          commitMetric({
+            statusCode: 'timeout'
+          });
         } else if (err instanceof RequestSocketTimeoutError) {
-          commitMetric({ statusCode: 'socket timeout' });
+          commitMetric({
+            statusCode: 'socket timeout'
+          });
         } else if (err instanceof RequestConnectionResetError) {
-          commitMetric({ statusCode: 'connection reset' });
+          commitMetric({
+            statusCode: 'connection reset'
+          });
         } else if (err instanceof RequestUnknownError) {
-          commitMetric({ statusCode: 'unknown' });
+          commitMetric({
+            statusCode: 'unknown'
+          });
         } else {
-          commitMetric({ statusCode: err.statusCode });
+          commitMetric({
+            statusCode: err.statusCode
+          });
         }
       },
       onSuccess: () => {
-        commitMetric({ statusCode: 200 });
+        commitMetric({
+          statusCode: 200
+        });
       },
       ...options,
     });

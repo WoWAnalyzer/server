@@ -7,6 +7,7 @@ import BlizzardApi, { getFactionFromRace, getFactionFromType, getCharacterGender
 import RegionNotSupportedError from 'helpers/RegionNotSupportedError';
 
 import models from '../../models';
+import moment from 'moment';
 
 const Character = models.Character;
 
@@ -110,9 +111,12 @@ async function getCharacterFromBlizzardForum(guid, region, realm, name) {
   }
 
   let thumbnailAsset = characterData.user.avatar_template || characterData.assets.find(asset => asset.key === 'avatar_template').value;
-  if (thumbnailAsset) {
+  if (thumbnailAsset && thumbnailAsset.includes('worldofwarcraft.com')) {
     thumbnailAsset = thumbnailAsset.split('character/')[1];
     thumbnailAsset = thumbnailAsset.split('?alt=/')[0];
+  } else {
+    // we aren't going to use this asset if it isn't a real render. typically this means the WoW icon is used for the default on someone's profile
+    thumbnailAsset = null;
   }
 
   const json = {
@@ -122,8 +126,9 @@ async function getCharacterFromBlizzardForum(guid, region, realm, name) {
     name: name,
     battlegroup: null, // deprecated in the new Blizzard API
     faction: getFactionFromRace(characterData.user.character.race),
-    class: characterData.user.character.class,
-    race: characterData.user.character.race,
+    // these are part of the forum response, but are not provided in ID form. nulling them out allows the cache to work
+    class: null,
+    race: null,
     gender: null,
     achievementPoints: characterData.user.character.achievement_points || 0,
     thumbnail: thumbnailAsset,
@@ -315,14 +320,16 @@ router.get('/i/character/classic/:id([0-9]+)/:region([A-Z]{2})/:realm([^/]{2,})/
   const { id, region, realm, name } = req.params;
   const storedCharacter = await getStoredCharacter(id);
   let responded = false;
-  // Old cache entries won't have the thumbnail value. We want the thumbnail value. So don't respond yet if it's missing.
-  if (storedCharacter && storedCharacter.thumbnail) {
+  if (storedCharacter) {
     sendJson(res, storedCharacter);
     responded = true;
   }
 
-  // noinspection JSIgnoredPromiseFromCall
-  fetchClassicCharacter(id, region, realm, name, !responded ? res : null);
+  // the forum API is *probably* not intended to be hit as much as the official blizz API. we don't aggressively refresh thumbnails, only hitting it at most once a week per character.
+  if (!storedCharacter || moment().subtract(7, 'days').isAfter(storedCharacter.lastSeenAt)) {
+    // noinspection JSIgnoredPromiseFromCall
+    fetchClassicCharacter(id, region, realm, name, !responded ? res : null);
+  }
 });
 
 export default router;

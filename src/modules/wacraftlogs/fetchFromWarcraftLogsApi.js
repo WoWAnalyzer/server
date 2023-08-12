@@ -9,17 +9,27 @@ import retryingRequest from 'helpers/retryingRequest';
 
 import WarcraftLogsApiError from './WarcraftLogsApiError';
 
-const WCL_DOMAIN = process.env.WARCRAFT_LOGS_DOMAIN;
+const WCL_DOMAINS = {
+  'retail': 'https://www.warcraftlogs.com',
+  'classic': 'https://classic.warcraftlogs.com'
+};
+
 const WCL_MAINTENANCE_STRING = 'Warcraft Logs is down for maintenance';
 export const WCL_REPORT_DOES_NOT_EXIST_HTTP_CODE = 400;
 const USER_AGENT = process.env.USER_AGENT;
 const TIMEOUT = 4000; // ms after which to abort the request
 
 function getWclApiUrl(path, query, apiKey) {
-  return `${WCL_DOMAIN}/v1/${path}?${querystring.stringify({
+  const gameType = query.game ? query.game : 'retail';
+
+  const params = {
     api_key: apiKey,
     ...query,
-  })}`;
+  };
+
+  delete params.game;
+
+  return `${WCL_DOMAINS[gameType]}/v1/${path}?${querystring.stringify(params)}`;
 }
 function tryJsonParse(string) {
   let json = null;

@@ -1,5 +1,6 @@
+import { Sequelize } from 'sequelize';
 module.exports = {
-  up: (queryInterface, Sequelize) => {
+  up: ({ context: queryInterface}) => {
     return Promise.all([
       queryInterface.addColumn('Character', 'class', Sequelize.INTEGER, {
         allowNull: false,
@@ -34,7 +35,7 @@ module.exports = {
     ]);
   },
 
-  down: (queryInterface, Sequelize) => {
+  down: ({ query: queryInterface}) => {
     return Promise.all([
       queryInterface.removeColumn('Character', 'class'),
       queryInterface.removeColumn('Character', 'race'),

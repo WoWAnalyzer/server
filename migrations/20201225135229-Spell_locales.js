@@ -1,7 +1,7 @@
-'use strict';
+import { Sequelize } from 'sequelize';
 
 module.exports = {
-  up: (queryInterface, Sequelize) => {
+  up: ({context: queryInterface}) => {
     return Promise.all([
       queryInterface.bulkDelete('Spell', {}, {
         truncate: true,
@@ -13,7 +13,7 @@ module.exports = {
     ])
   },
 
-  down: (queryInterface, Sequelize) => {
+  down: ({context: queryInterface}) => {
     return queryInterface.changeColumn('Spell', 'name', {
       type: Sequelize.STRING(255),
       allowNull: false,

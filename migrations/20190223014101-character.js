@@ -1,15 +1,16 @@
+import { Sequelize} from 'sequelize';
 module.exports = {
-  up: (queryInterface, Sequelize) => {
+  up: ({ context: queryInterface }) => {
     return Promise.all([
-      queryInterface.addColumn('Character', 'heartOfAzeroth', Sequelize.JSON, {
+      queryInterface.addColumn("Character", "heartOfAzeroth", Sequelize.JSON, {
         allowNull: true,
       }),
     ]);
   },
 
-  down: (queryInterface, Sequelize) => {
+  down: ({ context: queryInterface }) => {
     return Promise.all([
-      queryInterface.removeColumn('Character', 'heartOfAzeroth'),
+      queryInterface.removeColumn("Character", "heartOfAzeroth"),
     ]);
   },
 };

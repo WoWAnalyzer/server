@@ -5,68 +5,31 @@
   "license": "AGPL-3.0-or-later",
   "main": "src/index.js",
   "scripts": {
-    "start": "yarn migrate && nodemon --exec babel-node src/index.js",
-    "migrate": "yarn sequelize db:migrate --config src/config/database.js",
-    "migrate:undo": "yarn sequelize db:migrate:undo --config src/config/database.js",
-    "migrate:create": "yarn sequelize migration:generate --name",
-    "test": "jest --watchAll",
-    "test:once": "jest",
-    "build": "babel -d build --ignore __mocks__ src && node ./config/postbuild.js",
-    "serve": "node --harmony node_modules/sequelize-cli/lib/sequelize db:migrate --config build/config/database.js && node --harmony build/index.js",
-    "blizztos": "babel-node ./scripts/BlizzardTosDelete.js"
+    "start": "tsx src/index.ts",
+    "migrate": "tsx scripts/migrate.ts",
+    "blizztos": "tsx ./scripts/BlizzardTosDelete.js"
   },
   "dependencies": {
-    "@sentry/node": "^5.0.0-rc.1",
-    "agentkeepalive": "^4.0.2",
-    "babel-plugin-inline-dotenv": "^1.2.2",
-    "babel-runtime": "^6.26.0",
-    "body-parser": "^1.18.3",
-    "compression": "^1.7.4",
-    "cookie-session": "^2.0.0-beta.3",
-    "cron": "^1.8.2",
-    "dotenv": "^7.0.0",
-    "es6-error": "^4.1.1",
-    "express": "^4.16.4",
-    "express-async-errors": "^3.1.1",
-    "express-http-proxy": "^1.5.1",
-    "form-data": "^4.0.0",
-    "mariadb": "^2.0.3",
-    "moment": "^2.25.3",
-    "nanoid": "^2.0.1",
-    "node-fetch": "^2.6.1",
-    "passport": "^0.4.0",
+    "@fastify/passport": "^2.4.0",
+    "@fastify/secure-session": "^7.1.0",
+    "@sentry/node": "^7.76.0",
+    "axios": "^1.6.0",
+    "date-fns": "^2.30.0",
+    "dotenv": "^16.3.1",
+    "fastify": "^4.24.3",
+    "graphql": "^16.8.1",
+    "graphql-request": "^6.1.0",
+    "mariadb": "^3.2.2",
     "passport-github": "^1.1.0",
     "passport-patreon": "^1.0.1",
-    "prom-client": "^11.2.1",
-    "request": "^2.88.0",
-    "request-promise-native": "^1.0.7",
-    "sequelize": "^5.15.1",
-    "sequelize-cli": "^5.4.0"
+    "sequelize": "^6.33.0"
   },
   "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-core": "^6.26.3",
-    "babel-jest": "^23.6.0",
-    "babel-plugin-module-resolver": "^3.2.0",
-    "babel-plugin-transform-class-properties": "^6.24.1",
-    "babel-plugin-transform-runtime": "^6.23.0",
-    "babel-preset-env": "^1.7.0",
-    "babel-preset-es2015": "^6.24.1",
-    "babel-preset-stage-2": "^6.24.1",
-    "jest": "^24.5.0",
-    "nodemon": "^1.18.10"
-  },
-  "jest": {
-    "testEnvironment": "node",
-    "testPathIgnorePatterns": [
-      "<rootDir>/node_modules/",
-      "<rootDir>/build/"
-    ],
-    "transform": {
-      "^.+\\.(js|jsx|mjs)$": "<rootDir>/node_modules/babel-jest"
-    },
-    "modulePaths": [
-      "src"
-    ]
+    "@types/passport-github": "^1.1.11",
+    "eslint": "^8.52.0",
+    "prettier": "^3.0.3",
+    "sequelize-cli": "^6.6.1",
+    "tsx": "^3.14.0",
+    "umzug": "^3.3.1"
   }
 }

@@ -34,6 +34,11 @@ const user: FastifyPluginCallback = (app, _, done) => {
     return;
   }
 
+  passport.registerUserSerializer(async (user: User) => user.id);
+  passport.registerUserDeserializer(async (id: number) => {
+    return await User.findByPk(id);
+  });
+
   const options = {
     successRedirect: loginRedirect,
     failureRedirect: loginRedirect,
@@ -59,7 +64,7 @@ const user: FastifyPluginCallback = (app, _, done) => {
 
   app.post("/logout", (req, reply) => {
     req.logout();
-    reply.send(true);
+    return reply.send(true);
   });
 
   app.get("/user", async (req, reply) => {
@@ -110,7 +115,7 @@ const user: FastifyPluginCallback = (app, _, done) => {
       };
     }
 
-    reply.send(response);
+    return reply.send(response);
   });
   done();
 };

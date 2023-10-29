@@ -1,11 +1,11 @@
 module.exports = {
-  up: ({context: queryInterface}) => {
+  up: (queryInterface, DataTypes) => {
     return Promise.all([
       queryInterface.sequelize.query('ALTER TABLE `WclApiResponse` CHANGE COLUMN `content` `content` LONGTEXT NOT NULL COLLATE \'utf8_general_ci\''),
     ]);
   },
 
-  down: ({context: queryInterface}) => {
+  down: (queryInterface, Sequelize) => {
     return Promise.all([
       queryInterface.sequelize.query('ALTER TABLE `WclApiResponse` CHANGE COLUMN `content` `content` LONGTEXT NOT NULL COLLATE \'latin1_general_cs\''),
     ]);

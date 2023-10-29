@@ -5,8 +5,10 @@
   "license": "AGPL-3.0-or-later",
   "main": "src/index.js",
   "scripts": {
-    "start": "tsx src/index.ts",
+    "start": "NODE_ENV=development tsx src/index.ts",
+    "serve": "tsx src/index.ts",
     "migrate": "tsx scripts/migrate.ts",
+    "migrate:undo": "tsx scripts/migrate.ts --down",
     "blizztos": "tsx ./scripts/BlizzardTosDelete.js"
   },
   "dependencies": {

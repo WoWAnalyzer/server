@@ -1,8 +1,7 @@
-import { Sequelize as DataTypes } from "sequelize";
 module.exports = {
-  up: ({ context: queryInterface }) => {
+  up: (queryInterface, DataTypes) => {
     return Promise.all([
-      queryInterface.createTable("Item", {
+      queryInterface.createTable('Item', {
         id: {
           type: DataTypes.INTEGER,
           primaryKey: true,
@@ -24,7 +23,7 @@ module.exports = {
     ]);
   },
 
-  down: ({ context: queryInterface }) => {
-    return queryInterface.dropTable("Item");
+  down: (queryInterface, Sequelize) => {
+    return queryInterface.dropTable('Item');
   },
 };

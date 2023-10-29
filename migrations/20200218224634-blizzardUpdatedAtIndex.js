@@ -1,11 +1,11 @@
 module.exports = {
-  up: ({context: queryInterface}) => {
+  up: (queryInterface, Sequelize) => {
     return Promise.all([
       queryInterface.addIndex('Character', ['blizzardUpdatedAt'])
     ]);
   },
 
-  down: ({context: queryInterface}) => {
+  down: (queryInterface, Sequelize) => {
     return Promise.all([
       queryInterface.removeIndex('Character', ['blizzardUpdatedAt']),
     ]);

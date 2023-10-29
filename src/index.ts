@@ -9,6 +9,7 @@ import passport from "@fastify/passport";
 import ads from "./route/ad.ts";
 import healthcheck from "./route/healthcheck.ts";
 import user from "./route/user/index.ts";
+import * as blizzard from "./route/blizzard";
 
 env.setup();
 
@@ -30,6 +31,7 @@ app.register(passport.secureSession());
 app.register(ads);
 app.register(healthcheck);
 app.register(user);
+app.register(blizzard.character);
 
 app.listen(
   { port: process.env.PORT ? Number(process.env.PORT) : 3001 },

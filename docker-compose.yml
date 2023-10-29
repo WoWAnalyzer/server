@@ -23,6 +23,7 @@ services:
       - MYSQL_DATABASE=wowanalyzer
     depends_on:
       - database
+      - cache
 
   database:
     image: mariadb:10.3
@@ -35,3 +36,8 @@ services:
     restart: always
     ports:
      - 3306:3306
+
+  cache:
+    image: memcached:1.6-alpine
+    ports:
+      - 11211:11211

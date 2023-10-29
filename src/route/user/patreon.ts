@@ -23,11 +23,6 @@ export async function fetchRawPatreonProfile(
   const response = await axios.get(
     "https://api.patreon.com/oauth2/v2/identity?include=memberships&fields%5Buser%5D=full_name,image_url&fields%5Bmember%5D=patron_status,currently_entitled_amount_cents",
     {
-      params: {
-        include: "memberships",
-        "fields[user]": "full_name,image_url",
-        "fields[member]": "patron_status,currently_entitled_amount_cents",
-      },
       headers: {
         "User-Agent": "WoWAnalyzer.com API",
         Authorization: `Bearer ${accessToken}`,

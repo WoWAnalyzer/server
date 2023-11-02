@@ -1,6 +1,7 @@
 import { FastifyPluginAsync } from "fastify";
 import * as cache from "../../cache";
 import * as api from "./api";
+import * as spells from "./spells";
 
 type CharacterParams = {
   id: string;
@@ -119,5 +120,26 @@ export const character: FastifyPluginAsync = async (app) => {
   app.get<{ Params: CharacterParams }>(
     "/i/character/classic/:id([0-9]+)/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})",
     async (req, reply) => {},
+  );
+
+  app.get<{ Params: { id: string } }>(
+    "/i/spell/:id([0-9]+)",
+    async (req, reply) => {
+      const { id } = req.params;
+      const cacheKey = `spell-${id}`;
+
+      const cached = await cache.get<spells.Spell>(cacheKey);
+      if (cached) {
+        return reply.send(cached);
+      }
+
+      const spell = await spells.get(Number.parseInt(id));
+      if (spell) {
+        cache.set(cacheKey, spell);
+        return reply.send(spell);
+      } else {
+        return reply.code(404);
+      }
+    },
   );
 };

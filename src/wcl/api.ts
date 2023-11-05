@@ -44,7 +44,7 @@ export async function query<T, V extends Variables>(
   let data;
   try {
     data = await run();
-  } catch {
+  } catch (error) {
     // TODO: actually check status code
     token = await getToken(true);
     data = await run();

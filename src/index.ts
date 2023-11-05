@@ -10,6 +10,7 @@ import ads from "./route/ad.ts";
 import healthcheck from "./route/healthcheck.ts";
 import user from "./route/user/index.ts";
 import * as blizzard from "./route/blizzard";
+import * as gameData from "./route/game-data";
 
 env.setup();
 
@@ -25,6 +26,11 @@ app.register(secureSession, {
       : fs.readFileSync(path.join(__dirname, "../secret-key")),
 });
 
+app.setErrorHandler((err, request, reply) => {
+  console.error(err);
+  return reply.send(500);
+});
+
 app.register(passport.initialize());
 app.register(passport.secureSession());
 
@@ -32,6 +38,7 @@ app.register(ads);
 app.register(healthcheck);
 app.register(user);
 app.register(blizzard.character);
+app.register(gameData.spells);
 
 app.listen(
   { port: process.env.PORT ? Number(process.env.PORT) : 3001 },

@@ -19,6 +19,8 @@ const spellQuery = gql`
   }
 `;
 
+// NOTE: this is ported from the old code. unclear why we use WCL instead of Blizzard API for this?
+
 export async function get(id: number): Promise<Spell | undefined> {
   const data = await wclApi.query<
     { gameData: { ability?: Spell } },

@@ -1,12 +1,12 @@
 import axios, { AxiosError } from "axios";
-enum Region {
+export enum Region {
   EU = "EU",
   US = "US",
   TW = "TW",
   KR = "KR",
 }
 
-function isSupportedRegion(value: string): value is Region {
+export function isSupportedRegion(value: string): value is Region {
   return Object.values(Region).includes(value as Region);
 }
 
@@ -23,6 +23,10 @@ const localeByRegion: Record<Region, string> = {
   [Region.TW]: "zh_TW",
   [Region.KR]: "ko_KR",
 };
+
+export function getLocale(region: Region): string {
+  return localeByRegion[region];
+}
 
 export async function fetchGuild(
   region: Region,
@@ -71,9 +75,16 @@ export async function fetchCharacterData<T = BaseCharacterData>(
     url += "/" + subset;
   }
 
-  return fetchApi<T>(region, "character", url, {
-    namespace: `profile${isClassic ? "-classic" : ""}-${region}`,
-  });
+  return (
+    fetchApi <
+    T >
+    (region,
+    "character",
+    url,
+    {
+      namespace: `profile${isClassic ? "-classic" : ""}-${region}`,
+    })
+  );
 }
 
 /**
@@ -144,14 +155,14 @@ export async function fetchSpellMedia(spellId: number) {
 }
 
 export async function fetchItem(id: number, region = Region.US) {
-  return fetchApi(region, "item", `/data/wow/item/${encodeURIComponent(id)}`, {
+  return fetchApi<{ name: Record<string, string | undefined>}>(region, "item", `/data/wow/item/${encodeURIComponent(id)}`, {
     namespace: `static-${region}`,
     locale: undefined, // without specifying one locale we get strings for all locales
   });
 }
 
 export async function fetchItemMedia(id: number, region = Region.US) {
-  return fetchApi(
+  return fetchApi<{ assets: Array<{ key: string; value: string; }>; }>(
     region,
     "item",
     `/data/wow/media/item/${encodeURIComponent(id)}`,

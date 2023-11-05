@@ -39,6 +39,7 @@ app.register(healthcheck);
 app.register(user);
 app.register(blizzard.character);
 app.register(gameData.spells);
+app.register(gameData.items);
 
 app.listen(
   { port: process.env.PORT ? Number(process.env.PORT) : 3001 },

@@ -1,4 +1,4 @@
-import { FastifyPluginAsync } from "fastify";
+import { FastifyPluginAsync, RouteHandlerMethod } from "fastify";
 import * as cache from "../../cache";
 import * as api from "./api";
 
@@ -12,7 +12,8 @@ type CharacterParams = {
 const cacheKey = (
   { id, region, realm, name }: CharacterParams,
   section: "retail" | "classic",
-) => `character-${section}-${id}-${region}-${realm}-${name}`;
+  kind: "character" | "guild" = "character",
+) => `${kind}-${section}-${id}-${region}-${realm}-${name}`;
 
 type Character = {
   id: string;
@@ -93,7 +94,72 @@ async function fetchCharacter(
   return result;
 }
 
-const CHARACTER_EXPIRATION_SECS = 24 * 60 * 60;
+type RGBA = [number, number, number, number];
+
+type Guild = {
+  id: number;
+  region: string;
+  realm: string;
+  name: string;
+  nameSlug: string;
+  faction: number | null;
+  created: number;
+  achievementPoints: number;
+  memberCount: number;
+  crest?: {
+    emblemId: number;
+    emblemColor: RGBA;
+    borderId: number;
+    borderColor: RGBA;
+    backgroundColor: RGBA;
+  };
+};
+
+function convertColor({ rgba }: api.Color): RGBA {
+  return [rgba.r, rgba.g, rgba.b, rgba.a];
+}
+
+async function fetchGuild(
+  region: string,
+  realm: string,
+  name: string,
+  isClassic = false,
+): Promise<Guild | undefined> {
+  if (!api.isSupportedRegion(region)) {
+    return undefined;
+  }
+
+  const data = await api.fetchGuild(region, realm, name, isClassic);
+  if (!data) {
+    return undefined;
+  }
+
+  // TODO: classic crest colors are not RGBA, but ids. unclear if we need to care. not providing crest data for now in classic
+
+  return {
+    id: data.id,
+    region: region.toLowerCase(),
+    realm: realm,
+    name: data.name,
+    nameSlug: name,
+    faction: api.getFactionFromType(data.faction.type),
+    created: data.created_timestamp,
+    achievementPoints: data.achievement_points,
+    memberCount: data.member_count,
+    crest:
+      !isClassic && data.crest
+        ? {
+            emblemId: data.crest.emblem.id,
+            emblemColor: convertColor(data.crest.emblem.color),
+            borderId: data.crest.border.id,
+            borderColor: convertColor(data.crest.border.color),
+            backgroundColor: convertColor(data.crest.background.color),
+          }
+        : undefined,
+  };
+}
+
+const EXPIRATION_SECS = 24 * 60 * 60;
 
 // NOTE: these were doing cache-freshening on hits with the old API. do we want to continue doing that?
 export const character: FastifyPluginAsync = async (app) => {
@@ -106,7 +172,7 @@ export const character: FastifyPluginAsync = async (app) => {
         async () => {
           return fetchCharacter(region, realm, name);
         },
-        CHARACTER_EXPIRATION_SECS,
+        EXPIRATION_SECS,
       );
 
       if (char) {
@@ -126,11 +192,49 @@ export const character: FastifyPluginAsync = async (app) => {
         async () => {
           return fetchCharacter(region, realm, name, true);
         },
-        CHARACTER_EXPIRATION_SECS,
+        EXPIRATION_SECS,
       );
 
       if (char) {
         return reply.send(char);
+      } else {
+        return reply.code(404).send();
+      }
+    },
+  );
+};
+
+export const guild: FastifyPluginAsync = async (app) => {
+  app.get<{ Params: CharacterParams }>(
+    "/i/guild/:id([0-9]+)/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})",
+    async (req, reply) => {
+      const { region, realm, name } = req.params;
+      const guild = await cache.remember(
+        cacheKey(req.params, "retail", "guild"),
+        async () => fetchGuild(region, realm, name),
+        EXPIRATION_SECS,
+      );
+
+      if (guild) {
+        return reply.send(guild);
+      } else {
+        return reply.code(404).send();
+      }
+    },
+  );
+
+  app.get<{ Params: CharacterParams }>(
+    "/i/guild/classic/:id([0-9]+)/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})",
+    async (req, reply) => {
+      const { region, realm, name } = req.params;
+      const guild = await cache.remember(
+        cacheKey(req.params, "classic", "guild"),
+        async () => fetchGuild(region, realm, name, true),
+        EXPIRATION_SECS,
+      );
+
+      if (guild) {
+        return reply.send(guild);
       } else {
         return reply.code(404).send();
       }

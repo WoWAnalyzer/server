@@ -28,12 +28,38 @@ export function getLocale(region: Region): string {
   return localeByRegion[region];
 }
 
+export type Color = {
+  rgba: {
+    r: number;
+    g: number;
+    b: number;
+    a: number;
+  };
+};
+
+type Guild = {
+  id: number;
+  name: string;
+  faction: { type: string };
+  created_timestamp: number;
+  achievement_points: number;
+  member_count: number;
+  crest?: {
+    emblem: {
+      id: number;
+      color: Color;
+    };
+    border: { id: number; color: Color };
+    background: { color: Color };
+  };
+};
+
 export async function fetchGuild(
   region: Region,
   realm: string,
   nameSlug: string,
   isClassic = false,
-): Promise<unknown> {
+): Promise<Guild | undefined> {
   const realmSlug = getRealmSlug(realm);
   return fetchApi(
     region,
@@ -75,16 +101,9 @@ export async function fetchCharacterData<T = BaseCharacterData>(
     url += "/" + subset;
   }
 
-  return (
-    fetchApi <
-    T >
-    (region,
-    "character",
-    url,
-    {
-      namespace: `profile${isClassic ? "-classic" : ""}-${region}`,
-    })
-  );
+  return fetchApi<T>(region, "character", url, {
+    namespace: `profile${isClassic ? "-classic" : ""}-${region}`,
+  });
 }
 
 /**
@@ -154,15 +173,24 @@ export async function fetchSpellMedia(spellId: number) {
   });
 }
 
+type Item = { name: Record<string, string | undefined> };
+
 export async function fetchItem(id: number, region = Region.US) {
-  return fetchApi<{ name: Record<string, string | undefined>}>(region, "item", `/data/wow/item/${encodeURIComponent(id)}`, {
-    namespace: `static-${region}`,
-    locale: undefined, // without specifying one locale we get strings for all locales
-  });
+  return fetchApi<Item>(
+    region,
+    "item",
+    `/data/wow/item/${encodeURIComponent(id)}`,
+    {
+      namespace: `static-${region}`,
+      locale: undefined, // without specifying one locale we get strings for all locales
+    },
+  );
 }
 
+type ItemMedia = { assets: Array<{ key: string; value: string }> };
+
 export async function fetchItemMedia(id: number, region = Region.US) {
-  return fetchApi<{ assets: Array<{ key: string; value: string; }>; }>(
+  return fetchApi<ItemMedia>(
     region,
     "item",
     `/data/wow/media/item/${encodeURIComponent(id)}`,

@@ -40,6 +40,7 @@ app.register(healthcheck);
 app.register(externalLinks);
 app.register(user);
 app.register(blizzard.character);
+app.register(blizzard.guild);
 app.register(gameData.spells);
 app.register(gameData.items);
 

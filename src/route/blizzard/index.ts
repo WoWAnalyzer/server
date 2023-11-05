@@ -37,17 +37,20 @@ async function fetchCharacter(
   region: string,
   realm: string,
   name: string,
+  isClassic = false,
 ): Promise<Character | undefined> {
   // await getting base character data before we blast out parallel subset reqs
-  const base = await api.fetchCharacterData(region, realm, name);
+  const base = await api.fetchCharacterData(region, realm, name, isClassic);
 
   if (!base) {
     return undefined;
   }
 
   const [media, specs] = await Promise.all([
-    api.fetchCharacterMedia(region, realm, name),
-    api.fetchCharacterSpecializations(region, realm, name),
+    api.fetchCharacterMedia(region, realm, name, isClassic),
+    isClassic
+      ? Promise.resolve(undefined)
+      : api.fetchCharacterSpecializations(region, realm, name, isClassic),
   ]);
 
   const thumbnailAsset =
@@ -90,34 +93,47 @@ async function fetchCharacter(
   return result;
 }
 
+const CHARACTER_EXPIRATION_SECS = 24 * 60 * 60;
+
+// NOTE: these were doing cache-freshening on hits with the old API. do we want to continue doing that?
 export const character: FastifyPluginAsync = async (app) => {
   app.get<{ Params: CharacterParams }>(
     "/i/character/:id([0-9]+)/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})",
     async (req, reply) => {
       const { region, realm, name } = req.params;
-      const cached = await cache.get<Character>(cacheKey(req.params, "retail"));
-      if (cached) {
-        const result = reply.send(cached);
-        // dispatch this but don't wait on it.
-        // we freshen up the character but don't use the result right now
-        fetchCharacter(region, realm, name).then(
-          (value) => value && cache.set(cacheKey(req.params, "retail"), value),
-        );
-        return result;
-      }
+      const char = await cache.remember(
+        cacheKey(req.params, "retail"),
+        async () => {
+          return fetchCharacter(region, realm, name);
+        },
+        CHARACTER_EXPIRATION_SECS,
+      );
 
-      const char = await fetchCharacter(region, realm, name);
       if (char) {
-        cache.set(cacheKey(req.params, "retail"), char);
         return reply.send(char);
       } else {
-        return reply.code(404);
+        return reply.code(404).send();
       }
     },
   );
 
   app.get<{ Params: CharacterParams }>(
     "/i/character/classic/:id([0-9]+)/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})",
-    async (req, reply) => {},
+    async (req, reply) => {
+      const { region, realm, name } = req.params;
+      const char = await cache.remember(
+        cacheKey(req.params, "classic"),
+        async () => {
+          return fetchCharacter(region, realm, name, true);
+        },
+        CHARACTER_EXPIRATION_SECS,
+      );
+
+      if (char) {
+        return reply.send(char);
+      } else {
+        return reply.code(404).send();
+      }
+    },
   );
 };

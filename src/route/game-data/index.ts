@@ -15,7 +15,7 @@ export const spells: FastifyPluginAsync = async (app) => {
       if (value) {
         return reply.send(value);
       } else {
-        return reply.code(404);
+        return reply.code(404).send();
       }
     },
   );

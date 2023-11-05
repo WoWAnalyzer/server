@@ -28,6 +28,7 @@ export async function fetchGuild(
   region: Region,
   realm: string,
   nameSlug: string,
+  isClassic = false,
 ): Promise<unknown> {
   const realmSlug = getRealmSlug(realm);
   return fetchApi(
@@ -37,7 +38,7 @@ export async function fetchGuild(
       nameSlug,
     )}`,
     {
-      namespace: `profile-${region}`,
+      namespace: `profile${isClassic ? "-classic" : ""}-${region}`,
     },
   );
 }
@@ -57,6 +58,7 @@ export async function fetchCharacterData<T = BaseCharacterData>(
   region: string,
   realm: string,
   name: string,
+  isClassic = false,
   subset?: string,
 ): Promise<T | undefined> {
   const realmSlug = getRealmSlug(realm);
@@ -70,7 +72,7 @@ export async function fetchCharacterData<T = BaseCharacterData>(
   }
 
   return fetchApi<T>(region, "character", url, {
-    namespace: `profile-${region}`,
+    namespace: `profile${isClassic ? "-classic" : ""}-${region}`,
   });
 }
 
@@ -79,28 +81,11 @@ export async function fetchCharacterData<T = BaseCharacterData>(
  *
  * This approach is taken from the method that WCL uses for claiming characters and collecting thumbnails for Classic.
  */
-export async function fetchClassicCharacter(
-  region: string,
-  realm: string,
-  name: string,
-): Promise<unknown> {
-  if (!isSupportedRegion(region)) {
-    return undefined;
-  }
-
-  const realmSlug = getRealmSlug(realm);
-  const encodedUrl =
-    `https://${region.toLowerCase()}.forums.blizzard.com/en/wow/u/` +
-    encodeURIComponent(name) +
-    `-${realmSlug}.json`;
-
-  return axios.get(encodedUrl);
-}
-
 type CharacterDataSubsetFn<T = unknown> = (
   regionCode: string,
   realm: string,
   name: string,
+  isClassic?: boolean,
 ) => Promise<T | undefined>;
 
 export const fetchCharacterEquipment: CharacterDataSubsetFn = (...args) =>
@@ -124,19 +109,21 @@ type Talent = {
   rank: number;
 };
 
-type Loadout = {
+export type Loadout = {
   is_active: boolean;
   talent_loadout_code: string;
   selected_class_talents: Talent[];
   selected_spec_talents: Talent[];
 };
 
-type SpecData = {
+export type SpecWithLoadout = {
+  specialization: Spec;
+  loadouts?: Loadout[];
+};
+
+export type SpecData = {
   active_specialization?: Spec;
-  specializations?: Array<{
-    specialization: Spec;
-    loadouts?: Loadout[];
-  }>;
+  specializations?: Array<SpecWithLoadout>;
 };
 
 export const fetchCharacterSpecializations: CharacterDataSubsetFn<SpecData> = (
@@ -234,6 +221,11 @@ async function fetchApi<T>(
       } else {
         throw err;
       }
+    } else if (
+      err instanceof AxiosError &&
+      err.response?.status === HTTP_CODES.NOT_FOUND
+    ) {
+      return undefined;
     }
     throw err;
   }

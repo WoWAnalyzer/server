@@ -17,14 +17,19 @@ export async function get<T>(key: string): Promise<T | undefined> {
   return JSON.parse(text);
 }
 
-export async function set(key: string, value: any): Promise<void> {
+export async function set(
+  key: string,
+  value: any,
+  timeout?: number,
+): Promise<void> {
   const repr = JSON.stringify(value);
-  await client.set(key, repr);
+  await client.set(key, repr, { expires: timeout });
 }
 
 export async function remember<T>(
   key: string,
   thunk: () => Promise<T | undefined>,
+  timeout?: number,
 ): Promise<T | undefined> {
   const current = await get<T>(key);
   if (current) {
@@ -34,7 +39,7 @@ export async function remember<T>(
   const newValue = await thunk();
   if (newValue !== undefined && newValue !== null) {
     // intentionally not awaiting this.
-    set(key, newValue);
+    set(key, newValue, timeout);
     return newValue;
   } else {
     return undefined;

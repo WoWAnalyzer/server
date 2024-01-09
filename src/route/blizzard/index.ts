@@ -1,4 +1,4 @@
-import { FastifyPluginAsync, RouteHandlerMethod } from "fastify";
+import { FastifyPluginAsync } from "fastify";
 import * as cache from "../../cache";
 import * as api from "./api";
 
@@ -10,10 +10,10 @@ type CharacterParams = {
 };
 
 const cacheKey = (
-  { id, region, realm, name }: CharacterParams,
+  { id }: Pick<CharacterParams, "id">,
   section: "retail" | "classic",
   kind: "character" | "guild" = "character",
-) => `${kind}-${section}-${id}-${region}-${realm}-${name}`;
+) => `${kind}-${section}-${id}`;
 
 type Character = {
   id: string;
@@ -163,6 +163,18 @@ const EXPIRATION_SECS = 24 * 60 * 60;
 
 // NOTE: these were doing cache-freshening on hits with the old API. do we want to continue doing that?
 export const character: FastifyPluginAsync = async (app) => {
+  app.get<{ Params: { id: string } }>(
+    "/i/character/:id([0-9]+)",
+    async (req, reply) => {
+      const char = await cache.get(cacheKey(req.params, "retail"));
+      if (char) {
+        return reply.send(char);
+      } else {
+        return reply.code(404).send();
+      }
+    },
+  );
+
   app.get<{ Params: CharacterParams }>(
     "/i/character/:id([0-9]+)/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})",
     async (req, reply) => {

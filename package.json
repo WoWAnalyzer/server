@@ -12,6 +12,7 @@
     "blizztos": "tsx ./scripts/BlizzardTosDelete.js"
   },
   "dependencies": {
+    "@fastify/cors": "^8.5.0",
     "@fastify/passport": "^2.4.0",
     "@fastify/secure-session": "^7.1.0",
     "@sentry/node": "^7.76.0",

@@ -175,6 +175,26 @@ export const character: FastifyPluginAsync = async (app) => {
     },
   );
 
+  app.get<{ Params: Omit<CharacterParams, "id"> }>(
+    "/i/character/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})",
+    async (req, reply) => {
+      const { region, realm, name } = req.params;
+      const char = await cache.remember(
+        `character-by-name-retail-${region}-${realm}-${name}`,
+        async () => {
+          return fetchCharacter(region, realm, name);
+        },
+        EXPIRATION_SECS,
+      );
+
+      if (char) {
+        return reply.send(char);
+      } else {
+        return reply.code(404).send();
+      }
+    },
+  );
+
   app.get<{ Params: CharacterParams }>(
     "/i/character/:id([0-9]+)/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})",
     async (req, reply) => {

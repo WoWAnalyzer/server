@@ -6,10 +6,10 @@
   "main": "src/index.js",
   "scripts": {
     "start": "NODE_ENV=development tsx src/index.ts",
+    "production": "NODE_ENV=production tsx src/index.ts",
     "serve": "tsx src/index.ts",
     "migrate": "tsx scripts/migrate.ts",
-    "migrate:undo": "tsx scripts/migrate.ts --down",
-    "blizztos": "tsx ./scripts/BlizzardTosDelete.js"
+    "migrate:undo": "tsx scripts/migrate.ts --down"
   },
   "dependencies": {
     "@fastify/cors": "^8.5.0",

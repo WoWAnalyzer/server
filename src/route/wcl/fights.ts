@@ -191,6 +191,19 @@ function reportDataCompat({ reportData: { report } }: FightData): WCLReport {
 
   return {
     ...report,
+    fights: report.fights.map(
+      ({ bossPercentage, fightPercentage, ...fight }) => {
+        // the v2 api presents these on a 0-100 scale, but the v1 api uses 0-10000
+        if (bossPercentage !== undefined) {
+          (fight as WCLFight).bossPercentage = bossPercentage * 100;
+        }
+        if (fightPercentage !== undefined) {
+          (fight as WCLFight).fightPercentage = fightPercentage * 100;
+        }
+
+        return fight;
+      },
+    ),
     phases: report.phases.map(({ boss, phases, separatesWipes }) => ({
       boss,
       phases: phases.map(({ name }) => name),

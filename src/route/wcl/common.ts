@@ -48,6 +48,9 @@ export async function decompress(data: string): Promise<unknown> {
   });
 }
 
+/**
+ * Wrap a request to WCL in a caching & compression layer.
+ */
 export function wrapEndpoint<
   Q extends { translate?: string; _?: string },
   P = ReportParams,
@@ -56,6 +59,7 @@ export function wrapEndpoint<
   keyPrefix: string,
   thunk: (req: FastifyRequest<WclProxy<Q, P>>) => Promise<unknown>,
   compressed = false,
+  timeout: number | undefined = undefined,
 ) {
   return (app: FastifyInstance) =>
     app.get<WclProxy<Q, P>>(url, async (req, reply) => {
@@ -67,7 +71,7 @@ export function wrapEndpoint<
         if ((req.query as Q)._) {
           const data = await thunk(req);
           if (data) {
-            cache.set(cacheKey, data);
+            cache.set(cacheKey, data, timeout);
             return reply.send(
               compressed ? await decompress(data as string) : data,
             );
@@ -75,7 +79,11 @@ export function wrapEndpoint<
             return reply.send(404);
           }
         } else {
-          const data = await cache.remember(cacheKey, thunk.bind(null, req));
+          const data = await cache.remember(
+            cacheKey,
+            thunk.bind(null, req),
+            timeout,
+          );
 
           if (data) {
             return reply.send(

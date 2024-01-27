@@ -6,6 +6,7 @@ import graph from "./wcl/graph";
 import parses from "./wcl/character-parses";
 import encounterRankings from "./wcl/encounter-rankings";
 import { cacheControl } from "../common/cache-control";
+import guildReports from "./wcl/guild-reports";
 
 const wcl: FastifyPluginAsync = async (app) => {
   app.register(cacheControl);
@@ -15,6 +16,7 @@ const wcl: FastifyPluginAsync = async (app) => {
   graph(app);
   parses(app);
   encounterRankings(app);
+  guildReports(app);
 };
 
 export default wcl;

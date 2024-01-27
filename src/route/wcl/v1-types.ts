@@ -82,6 +82,7 @@ export interface Actor {
   petOwner?: number;
   type: string;
   subType: string;
+  icon?: string;
 }
 
 export type ActorId = Pick<Actor, "id">;

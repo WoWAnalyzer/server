@@ -46,6 +46,7 @@ const fightQuery = gql`
             petOwner
             type
             subType
+            icon
           }
         }
 
@@ -202,7 +203,12 @@ function reportDataCompat({ reportData: { report } }: FightData): WCLReport {
     lang: report.masterData.lang,
     logVersion: report.masterData.logVersion,
     gameVersion: report.masterData.gameVersion,
-    friendlies: Array.from(friendlies),
+    friendlies: Array.from(friendlies).map(({ subType, ...actor }) => ({
+      ...actor,
+      // in the v2 API, type is the top-level actor type (Player, NPC, Pet, etc), while subType is the class. in the old API the player list put the class in the "type" field
+      type: subType,
+      subType: "",
+    })),
     enemies: Array.from(enemies),
     friendlyPets: Array.from(friendlyPets.values()),
     enemyPets: Array.from(enemyPets),

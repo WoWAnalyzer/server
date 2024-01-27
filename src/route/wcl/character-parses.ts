@@ -18,6 +18,7 @@ type Query = {
   metric: string;
   zone: string;
   timeframe?: string;
+  game?: "classic" | "retail";
 };
 
 const characterParses = (app: FastifyInstance) => {
@@ -28,7 +29,11 @@ const characterParses = (app: FastifyInstance) => {
     const thunk = async () => {
       return (
         await axios.get(
-          `https://www.warcraftlogs.com/v1/parses/character/${req.params.name}/${req.params.server}/${req.params.region}`,
+          `https://${
+            req.query.game === "classic" ? "classic" : "www"
+          }.warcraftlogs.com/v1/parses/character/${req.params.name}/${
+            req.params.server
+          }/${req.params.region}`,
           {
             params: {
               api_key: process.env.WCL_V1_API_KEY,

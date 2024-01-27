@@ -33,8 +33,10 @@ app.register(cors, {
 });
 
 app.setErrorHandler((err, _request, reply) => {
-  console.error(err);
-  return reply.send(500);
+  console.error("uncaught exception", err);
+  return reply.status(500).send({
+    error: err,
+  });
 });
 
 app.register(passport.initialize());

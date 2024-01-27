@@ -29,6 +29,9 @@ dependencies:
   fastify:
     specifier: ^4.24.3
     version: 4.24.3
+  fastify-plugin:
+    specifier: ^4.5.1
+    version: 4.5.1
   graphql:
     specifier: ^16.8.1
     version: 16.8.1

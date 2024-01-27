@@ -1,6 +1,14 @@
-import { FastifyPluginAsync } from "fastify";
+import {
+  FastifyPluginAsync,
+  FastifyReply,
+  FastifyRequest,
+  RouteGenericInterface,
+  RouteHandlerMethod,
+} from "fastify";
 import * as cache from "../../cache";
 import * as api from "./api";
+import { cacheControl } from "../../common/cache-control";
+import { AxiosError } from "axios";
 
 type CharacterParams = {
   id: string;
@@ -10,10 +18,13 @@ type CharacterParams = {
 };
 
 const cacheKey = (
-  { id }: Pick<CharacterParams, "id">,
+  params: Pick<CharacterParams, "id"> | Omit<CharacterParams, "id">,
   section: "retail" | "classic",
   kind: "character" | "guild" = "character",
-) => `${kind}-${section}-${id}`;
+) =>
+  "id" in params
+    ? `${kind}-${section}-${params.id}`
+    : `${kind}-${section}-${params.region}-${params.realm}-${params.name}`;
 
 type Character = {
   id: string;
@@ -161,115 +172,122 @@ async function fetchGuild(
 
 const EXPIRATION_SECS = 24 * 60 * 60;
 
+const handleForbidden = <T extends RouteGenericInterface>(
+  f: (req: FastifyRequest<T>, reply: FastifyReply) => unknown,
+) => {
+  return async (req: FastifyRequest<T>, reply: FastifyReply) => {
+    try {
+      return await f(req, reply);
+    } catch (error) {
+      if (
+        error instanceof AxiosError &&
+        (error.response?.status === 403 || error.response?.status === 404)
+      ) {
+        return reply.code(404).send();
+      } else {
+        throw error;
+      }
+    }
+  };
+};
+
 // NOTE: these were doing cache-freshening on hits with the old API. do we want to continue doing that?
 export const character: FastifyPluginAsync = async (app) => {
+  app.register(cacheControl);
+
   app.get<{ Params: { id: string } }>(
     "/i/character/:id([0-9]+)",
-    async (req, reply) => {
+    handleForbidden(async (req, reply) => {
       const char = await cache.get(cacheKey(req.params, "retail"));
       if (char) {
         return reply.send(char);
       } else {
         return reply.code(404).send();
       }
-    },
+    }),
   );
 
-  app.get<{ Params: Omit<CharacterParams, "id"> }>(
+  const loadCharacter = (game: "retail" | "classic") =>
+    handleForbidden(
+      async (
+        req: FastifyRequest<{ Params: Omit<CharacterParams, "id"> }>,
+        reply: FastifyReply,
+      ) => {
+        const { region, realm, name } = req.params;
+        const char = await cache.remember(
+          cacheKey(req.params, game),
+          async () => {
+            return fetchCharacter(region, realm, name);
+          },
+          EXPIRATION_SECS,
+        );
+
+        if (char) {
+          return reply.send(char);
+        } else {
+          return reply.code(404).send();
+        }
+      },
+    );
+
+  app.get(
     "/i/character/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})",
-    async (req, reply) => {
-      const { region, realm, name } = req.params;
-      const char = await cache.remember(
-        `character-by-name-retail-${region}-${realm}-${name}`,
-        async () => {
-          return fetchCharacter(region, realm, name);
-        },
-        EXPIRATION_SECS,
-      );
-
-      if (char) {
-        return reply.send(char);
-      } else {
-        return reply.code(404).send();
-      }
-    },
+    loadCharacter("retail"),
   );
-
-  app.get<{ Params: CharacterParams }>(
+  app.get(
     "/i/character/:id([0-9]+)/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})",
-    async (req, reply) => {
-      const { region, realm, name } = req.params;
-      const char = await cache.remember(
-        cacheKey(req.params, "retail"),
-        async () => {
-          return fetchCharacter(region, realm, name);
-        },
-        EXPIRATION_SECS,
-      );
-
-      if (char) {
-        return reply.send(char);
-      } else {
-        return reply.code(404).send();
-      }
-    },
+    loadCharacter("retail"),
   );
-
-  app.get<{ Params: CharacterParams }>(
+  app.get(
     "/i/character/classic/:id([0-9]+)/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})",
-    async (req, reply) => {
-      const { region, realm, name } = req.params;
-      const char = await cache.remember(
-        cacheKey(req.params, "classic"),
-        async () => {
-          return fetchCharacter(region, realm, name, true);
-        },
-        EXPIRATION_SECS,
-      );
-
-      if (char) {
-        return reply.send(char);
-      } else {
-        return reply.code(404).send();
-      }
-    },
+    loadCharacter("classic"),
   );
 };
 
 export const guild: FastifyPluginAsync = async (app) => {
-  app.get<{ Params: CharacterParams }>(
-    "/i/guild/:id([0-9]+)/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})",
-    async (req, reply) => {
-      const { region, realm, name } = req.params;
-      const guild = await cache.remember(
-        cacheKey(req.params, "retail", "guild"),
-        async () => fetchGuild(region, realm, name),
-        EXPIRATION_SECS,
-      );
+  app.register(cacheControl);
 
-      if (guild) {
-        return reply.send(guild);
-      } else {
-        return reply.code(404).send();
-      }
-    },
+  const loadGuild = (game: "retail" | "classic") =>
+    handleForbidden(
+      async (
+        req: FastifyRequest<{ Params: CharacterParams }>,
+        reply: FastifyReply,
+      ) => {
+        const { region, realm, name } = req.params;
+        const guild = await cache.remember(
+          cacheKey(req.params, game, "guild"),
+          async () =>
+            fetchGuild(
+              region,
+              realm,
+              name.replace(/\s/g, "-").toLowerCase(),
+              game === "classic",
+            ),
+          EXPIRATION_SECS,
+        );
+
+        if (guild) {
+          return reply.send(guild);
+        } else {
+          return reply.code(404).send();
+        }
+      },
+    );
+
+  app.get(
+    "/i/guild/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})",
+    loadGuild("retail"),
   );
-
-  app.get<{ Params: CharacterParams }>(
+  app.get(
+    "/i/guild/:id([0-9]+)/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})",
+    loadGuild("retail"),
+  );
+  app.get(
+    "/i/guild/classic/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})",
+    loadGuild("classic"),
+  );
+  app.get(
     "/i/guild/classic/:id([0-9]+)/:region([A-Z]{2})/:realm([^/]{2,})/:name([^/]{2,})",
-    async (req, reply) => {
-      const { region, realm, name } = req.params;
-      const guild = await cache.remember(
-        cacheKey(req.params, "classic", "guild"),
-        async () => fetchGuild(region, realm, name, true),
-        EXPIRATION_SECS,
-      );
-
-      if (guild) {
-        return reply.send(guild);
-      } else {
-        return reply.code(404).send();
-      }
-    },
+    loadGuild("classic"),
   );
 };

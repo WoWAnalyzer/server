@@ -5,8 +5,10 @@ import tables from "./wcl/tables";
 import graph from "./wcl/graph";
 import parses from "./wcl/character-parses";
 import encounterRankings from "./wcl/encounter-rankings";
+import { cacheControl } from "../common/cache-control";
 
 const wcl: FastifyPluginAsync = async (app) => {
+  app.register(cacheControl);
   fights(app);
   events(app);
   tables(app);

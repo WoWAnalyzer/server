@@ -1,6 +1,8 @@
 import type { FastifyPluginCallback } from "fastify";
+import { cacheControl } from "../common/cache-control";
 
 const ad: FastifyPluginCallback = (app, _, done) => {
+  app.register(cacheControl);
   app.get("/ads.txt", (req, reply) =>
     reply.redirect(
       301,

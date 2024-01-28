@@ -6,6 +6,7 @@ import path from "path";
 import secureSession from "@fastify/secure-session";
 import passport from "@fastify/passport";
 import cors from "@fastify/cors";
+import replyFrom from "@fastify/reply-from";
 
 import ads from "./route/ad.ts";
 import healthcheck from "./route/healthcheck.ts";
@@ -51,6 +52,21 @@ app.register(blizzard.guild);
 app.register(gameData.spells);
 app.register(gameData.items);
 app.register(wcl);
+
+app.register(replyFrom, {
+  base: process.env.SPA_PROXY_HOST,
+});
+
+app.get("/*", async (req, reply) => {
+  if (req.originalUrl === "/") {
+    reply.headers({
+      "cache-control": "private, no-cache, no-store, must-revalidate",
+      expires: "-1",
+      pragma: "no-cache",
+    });
+  }
+  return reply.from(req.originalUrl);
+});
 
 app.listen(
   { host: "0.0.0.0", port: process.env.PORT ? Number(process.env.PORT) : 3001 },

@@ -16,4 +16,5 @@ COPY ./src/ /usr/src/app/src/
 COPY ./migrations/ /usr/src/app/migrations/
 COPY ./scripts/ /usr/src/app/scripts/
 
+ENTRYPOINT /bin/sh
 CMD pnpm run migrate && pnpm run production

@@ -217,7 +217,7 @@ export const character: FastifyPluginAsync = async (app) => {
         const char = await cache.remember(
           cacheKey(req.params, game),
           async () => {
-            return fetchCharacter(region, realm, name);
+            return fetchCharacter(region, realm, name, game === "classic");
           },
           EXPIRATION_SECS,
         );

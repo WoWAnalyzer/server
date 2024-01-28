@@ -53,7 +53,7 @@ app.register(gameData.items);
 app.register(wcl);
 
 app.listen(
-  { port: process.env.PORT ? Number(process.env.PORT) : 3001 },
+  { host: "0.0.0.0", port: process.env.PORT ? Number(process.env.PORT) : 3001 },
   (err) => {
     if (err) {
       console.error(err);

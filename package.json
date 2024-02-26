@@ -37,6 +37,7 @@
     "prettier": "^3.0.3",
     "sequelize-cli": "^6.6.1",
     "tsx": "^3.14.0",
+    "typescript": "^5.3.3",
     "umzug": "^3.3.1"
   }
 }

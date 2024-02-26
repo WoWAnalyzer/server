@@ -57,7 +57,7 @@ const characterParses = (app: FastifyInstance) => {
     if (data) {
       return reply.send(data);
     } else {
-      return reply.status(404);
+      return reply.status(404).send();
     }
   });
 };

@@ -62,14 +62,15 @@ const user: FastifyPluginCallback = (app, _, done) => {
     console.warn("Unable to initialize Github auth. Github login disabled");
   }
 
-  app.post("/logout", (req, reply) => {
-    req.logout();
+  // note that the frontend makes a GET for logouts
+  app.get("/logout", (req, reply) => {
+    req.logOut();
     return reply.send(true);
   });
 
   app.get("/user", async (req, reply) => {
     if (!req.user) {
-      return reply.status(403);
+      return reply.status(403).send();
     }
 
     const response: Record<string, unknown> = {

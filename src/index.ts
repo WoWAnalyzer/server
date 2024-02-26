@@ -22,12 +22,14 @@ const app = Fastify({
   logger: true,
 });
 
-console.log(process.env.NODE_ENV);
 app.register(secureSession, {
   key:
     process.env.NODE_ENV === "development"
       ? fs.readFileSync(path.join(__dirname, "../.secret-key.development"))
       : fs.readFileSync(path.join(__dirname, "../secret-key")),
+  cookie: {
+    path: "/",
+  },
 });
 app.register(cors, {
   origin: true,

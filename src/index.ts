@@ -33,6 +33,7 @@ app.register(secureSession, {
 });
 app.register(cors, {
   origin: true,
+  credentials: true,
 });
 
 app.setErrorHandler((err, _request, reply) => {

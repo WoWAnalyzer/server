@@ -55,10 +55,10 @@ export interface WCLPhaseTransition {
 export interface WCLReport {
   fights: WCLFight[];
   lang: string;
-  friendlies: Actor[];
-  enemies: Actor[];
-  friendlyPets: (Actor & { fights: { id: number; instanceCount: number }[] })[];
-  enemyPets: Actor[];
+  friendlies: ReportPlayer[];
+  enemies: ReportEnemy[];
+  friendlyPets: ReportPet[];
+  enemyPets: ReportPet[];
   phases?: WCLReportPhases[];
   logVersion: number;
   gameVersion: number;
@@ -84,5 +84,15 @@ export interface Actor {
   subType: string;
   icon?: string;
 }
+
+type ActorFight = { id: number; instances: number; groups: number };
+
+export type WithFights<T, K extends keyof ActorFight = keyof ActorFight> = T & {
+  fights: Array<Pick<ActorFight, K>>;
+};
+
+export type ReportPet = WithFights<Actor, "id" | "instances">;
+export type ReportEnemy = WithFights<Actor>;
+export type ReportPlayer = WithFights<Actor, "id">;
 
 export type ActorId = Pick<Actor, "id">;

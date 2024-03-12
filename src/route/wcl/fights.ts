@@ -1,7 +1,16 @@
 import { wrapEndpoint } from "./common";
 import * as api from "../../wcl/api";
 import { gql } from "graphql-request";
-import { Actor, ActorId, WCLFight, WCLReport } from "./v1-types";
+import {
+  Actor,
+  ActorId,
+  ReportEnemy,
+  ReportPet,
+  ReportPlayer,
+  WCLFight,
+  WCLReport,
+  WithFights,
+} from "./v1-types";
 
 const fightQuery = gql`
   query getFights($code: String, $translate: Boolean) {
@@ -70,13 +79,18 @@ const fightQuery = gql`
           }
           friendlyNPCs {
             id
+            instanceCount
           }
           enemyPlayers
           enemyPets {
             id
+            groupCount
+            instanceCount
           }
           enemyNPCs {
             id
+            groupCount
+            instanceCount
           }
           dungeonPulls {
             id
@@ -133,10 +147,10 @@ interface FightData {
         WCLFight & {
           friendlyPlayers?: number[];
           friendlyPets?: (ActorId & { instanceCount: number })[];
-          friendlyNPCs?: ActorId[];
+          friendlyNPCs?: (ActorId & { instanceCount: number })[];
           enemyPlayers?: number[];
-          enemyPets?: ActorId[];
-          enemyNPCs?: ActorId[];
+          enemyPets?: Enemy[];
+          enemyNPCs?: Enemy[];
         }
       >;
       phases: Array<{
@@ -152,43 +166,80 @@ interface FightData {
   };
 }
 
-function reportDataCompat({ reportData: { report } }: FightData): WCLReport {
-  const friendlies = new Set<Actor>(),
-    friendlyPets = new Map<
-      number,
-      Actor & { fights: { id: number; instanceCount: number }[] }
-    >(),
-    enemies = new Set<Actor>(),
-    enemyPets = new Set<Actor>();
-  const actorsById = Object.fromEntries(
-    report.masterData.actors.map((actor) => [actor.id, actor]),
-  );
+type Enemy = ActorId & { instanceCount: number; groupCount: number };
+
+type ActorKind =
+  | "friendlyPlayers"
+  | "friendlyPets"
+  | "friendlyNPCs"
+  | "enemyPlayers"
+  | "enemyPets"
+  | "enemyNPCs";
+
+type ActorType = {
+  friendlyPlayers: ReportPlayer;
+  friendlyPets: ReportPet;
+  friendlyNPCs: ReportPet;
+  enemyPlayers: ReportPlayer;
+  enemyPets: ReportEnemy;
+  enemyNPCs: ReportEnemy;
+};
+
+type ActorInput<T extends ActorKind> = Required<
+  FightData["reportData"]["report"]["fights"][number]
+>[T][number];
+type ActorAppender<T extends ActorKind> = (
+  v: ActorInput<T>,
+  actor: ActorType[T],
+) => void;
+
+const mapEnemy: ActorAppender<"enemyNPCs" | "enemyPets"> = (input, actor) => {
+  actor.fights.push({
+    id: input.id,
+    instances: input.instanceCount,
+    groups: input.groupCount,
+  });
+};
+
+const mapPet: ActorAppender<"friendlyPets"> = (input, actor) => {
+  actor.fights.push({
+    id: input.id,
+    instances: input.instanceCount,
+  });
+};
+
+function withFights<T extends ActorKind>(
+  report: FightData["reportData"]["report"],
+  kind: T,
+  appender: ActorAppender<T>,
+): Array<ActorType[T]> {
+  const result: Map<number, ActorType[typeof kind]> = report.masterData.actors
+    .map((actor) => ({
+      ...actor,
+      fights: [],
+    }))
+    .reduce((map, actor) => map.set(actor.id, actor), new Map());
 
   for (const fight of report.fights) {
-    (fight.friendlyPlayers ?? [])
-      .concat(fight.friendlyNPCs?.map(({ id }) => id) ?? [])
-      .forEach((actor) => friendlies.add(actorsById[actor]));
-    fight.friendlyPets?.forEach((pet) => {
-      const actual = friendlyPets.has(pet.id)
-        ? friendlyPets.get(pet.id)
-        : friendlyPets
-            .set(pet.id, {
-              ...actorsById[pet.id],
-              fights: [],
-            })
-            .get(pet.id);
+    const data = fight[kind];
+    if (!data) {
+      continue;
+    }
 
-      actual?.fights.push({
-        id: fight.id,
-        instanceCount: pet.instanceCount,
-      });
+    data.forEach((entry) => {
+      const id = typeof entry === "number" ? entry : entry.id;
+      const actor = result.get(id);
+      if (!actor) {
+        return;
+      }
+      appender(entry, actor);
     });
-    (fight.enemyPlayers ?? [])
-      .concat(fight.enemyNPCs?.map(({ id }) => id) ?? [])
-      .forEach((actor) => enemies.add(actorsById[actor]));
-    fight.enemyPets?.forEach((pet) => enemyPets.add(actorsById[pet.id]));
   }
 
+  return Array.from(result.values()).filter((v) => v.fights.length > 0);
+}
+
+function reportDataCompat({ reportData: { report } }: FightData): WCLReport {
   return {
     ...report,
     fights: report.fights.map(
@@ -216,15 +267,18 @@ function reportDataCompat({ reportData: { report } }: FightData): WCLReport {
     lang: report.masterData.lang,
     logVersion: report.masterData.logVersion,
     gameVersion: report.masterData.gameVersion,
-    friendlies: Array.from(friendlies).map(({ subType, ...actor }) => ({
+    friendlies: withFights(report, "friendlyPlayers", (id, actor) => {
+      actor.fights.push({ id });
+      return actor;
+    }).map(({ subType, ...actor }) => ({
       ...actor,
       // in the v2 API, type is the top-level actor type (Player, NPC, Pet, etc), while subType is the class. in the old API the player list put the class in the "type" field
       type: subType,
       subType: "",
     })),
-    enemies: Array.from(enemies),
-    friendlyPets: Array.from(friendlyPets.values()),
-    enemyPets: Array.from(enemyPets),
+    enemies: withFights(report, "enemyNPCs", mapEnemy),
+    friendlyPets: withFights(report, "friendlyPets", mapPet),
+    enemyPets: withFights(report, "enemyPets", mapEnemy),
     zone: report.zone.id,
     exportedCharacters: report.exportedCharacters?.map(
       ({ server, ...rest }) => ({

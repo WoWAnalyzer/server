@@ -50,7 +50,7 @@ const fightQuery = gql`
           }
         }
 
-        fights(translate: $translate, killType: Encounters) {
+        fights(translate: $translate) {
           id
           start_time: startTime
           end_time: endTime

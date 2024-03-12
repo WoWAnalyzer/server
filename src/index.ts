@@ -33,7 +33,7 @@ app.register(secureSession, {
 });
 app.register(cors, {
   origin: (origin, cb) =>
-    origin && /localhost/.test(origin)
+    !origin || /(localhost|wowanalyzer)/m.test(origin)
       ? cb(null, true)
       : cb(new Error("cross-origin request denied"), false),
   credentials: true,

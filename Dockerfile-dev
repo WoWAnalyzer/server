@@ -1,13 +1,16 @@
-FROM node:11.11-alpine
+FROM node:21-alpine
+RUN wget -qO /bin/pnpm "https://github.com/pnpm/pnpm/releases/latest/download/pnpm-linuxstatic-x64" && chmod +x /bin/pnpm
 
 WORKDIR /usr/src/app/
 ENV NODE_ENV=development
 EXPOSE 3001
 
 # By doing this separate we allow Docker to cache this
-COPY package.json yarn.lock /usr/src/app/
-RUN yarn
+COPY package.json pnpm-lock.yaml /usr/src/app/
+RUN pnpm install
 
-COPY . /usr/src/app/
+COPY ./src/ /usr/src/app/src/
+COPY ./migrations/ /usr/src/app/migrations/
+COPY ./scripts/ /usr/src/app/scripts/
 
-CMD yarn migrate && ./node_modules/.bin/nodemon --legacy-watch --exec babel-node src/index.js
+CMD pnpm run migrate && pnpm run start

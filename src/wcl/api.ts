@@ -40,6 +40,7 @@ export async function query<T, V extends Variables>(
     request<T>("https://www.warcraftlogs.com/api/v2/client", gql, variables, {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
+      "Accept-Encoding": "deflate,gzip",
     });
   let data;
   try {

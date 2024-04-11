@@ -5,6 +5,7 @@ import githubStrategy, { refreshGitHubLastContribution } from "./github.ts";
 import patreonStrategy, { refreshPatreonProfile } from "./patreon.ts";
 import User from "../../models/User.ts";
 import { addDays, differenceInDays } from "date-fns";
+import type { AnyStrategy } from "@fastify/passport/dist/strategies/index";
 
 declare module "fastify" {
   interface PassportUser extends User {}
@@ -45,7 +46,7 @@ const user: FastifyPluginCallback = (app, _, done) => {
   };
 
   if (patreonStrategy) {
-    passport.use(patreonStrategy);
+    passport.use(patreonStrategy as AnyStrategy);
     app.get("/login/patreon", passport.authenticate("patreon"));
     app.get(
       "/login/patreon/callback",

@@ -2,6 +2,7 @@ import Fastify from "fastify";
 import * as env from "./env.ts";
 import fs from "fs";
 import path from "path";
+import * as Sentry from "@sentry/node";
 
 import secureSession from "@fastify/secure-session";
 import passport from "@fastify/passport";
@@ -17,6 +18,12 @@ import * as gameData from "./route/game-data";
 import wcl from "./route/wcl";
 
 env.setup();
+
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+  });
+}
 
 const app = Fastify({
   logger: true,
@@ -38,6 +45,7 @@ app.register(cors, {
 
 app.setErrorHandler((err, _request, reply) => {
   console.error("uncaught exception", err);
+  Sentry.captureException(err);
   return reply.status(500).send({
     error: err,
   });

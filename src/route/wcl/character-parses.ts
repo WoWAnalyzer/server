@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import axios from "axios";
 import * as cache from "../../cache";
+import * as Sentry from "@sentry/node";
 
 // FIXME we cheat on the character parses due to significant changes to the
 // response from WCL. specifically: it is not currently possible to get all
@@ -52,7 +53,7 @@ const characterParses = (app: FastifyInstance) => {
       data = await cache.remember(cacheKey, thunk);
     } else {
       data = await thunk();
-      data && cache.set(cacheKey, data);
+      data && cache.set(cacheKey, data).catch(Sentry.captureException);
     }
     if (data) {
       return reply.send(data);

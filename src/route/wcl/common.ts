@@ -2,6 +2,7 @@ import * as zlib from "node:zlib";
 import * as crypto from "node:crypto";
 import { FastifyInstance, FastifyRequest } from "fastify";
 import * as cache from "../../cache.ts";
+import * as Sentry from "@sentry/node";
 
 export type WclProxy<T, P = ReportParams> = { Params: P; Querystring: T };
 export type ReportParams = { code: string };
@@ -71,7 +72,7 @@ export function wrapEndpoint<
         if ((req.query as Q)._) {
           const data = await thunk(req);
           if (data) {
-            cache.set(cacheKey, data, timeout);
+            cache.set(cacheKey, data, timeout).catch(Sentry.captureException);
             return reply.send(
               compressed ? await decompress(data as string) : data,
             );

@@ -41,3 +41,4 @@ services:
     image: memcached:1.6-alpine
     ports:
       - 11211:11211
+    command: '-I 5M'

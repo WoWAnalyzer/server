@@ -1,5 +1,6 @@
 import { Client } from "memjs";
 import * as env from "./env";
+import * as Sentry from "@sentry/node";
 
 env.setup();
 
@@ -39,7 +40,7 @@ export async function remember<T>(
   const newValue = await thunk();
   if (newValue !== undefined && newValue !== null) {
     // intentionally not awaiting this.
-    set(key, newValue, timeout);
+    set(key, newValue, timeout).catch(Sentry.captureException);
     return newValue;
   } else {
     return undefined;

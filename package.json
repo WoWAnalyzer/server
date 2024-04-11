@@ -15,7 +15,7 @@
     "@fastify/cors": "^8.5.0",
     "@fastify/passport": "^2.4.0",
     "@fastify/reply-from": "^9.7.0",
-    "@fastify/secure-session": "^7.1.0",
+    "@fastify/secure-session": "^7.3.0",
     "@sentry/node": "^7.76.0",
     "axios": "^1.6.0",
     "date-fns": "^2.30.0",

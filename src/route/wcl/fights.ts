@@ -94,6 +94,7 @@ const fightQuery = gql`
           }
           dungeonPulls {
             id
+            name
             boss: encounterID
             start_time: startTime
             end_time: endTime

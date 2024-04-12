@@ -9,6 +9,7 @@ import * as cache from "../../cache";
 import * as api from "./api";
 import { cacheControl } from "../../common/cache-control";
 import { AxiosError } from "axios";
+import * as Sentry from "@sentry/node";
 
 type CharacterParams = {
   id: string;
@@ -59,10 +60,19 @@ async function fetchCharacter(
   }
 
   const [media, specs] = await Promise.all([
-    api.fetchCharacterMedia(region, realm, name, isClassic),
+    api.fetchCharacterMedia(region, realm, name, isClassic).catch((error) => {
+      // not reporting this to sentry because the blizzard api is currently sending 403s from this endpoint to ALL requests
+      console.error("failed to retrieve character media", error);
+      return undefined;
+    }),
     isClassic
       ? Promise.resolve(undefined)
-      : api.fetchCharacterSpecializations(region, realm, name, isClassic),
+      : api
+          .fetchCharacterSpecializations(region, realm, name, isClassic)
+          .catch((error) => {
+            Sentry.captureException(error);
+            return undefined;
+          }),
   ]);
 
   const thumbnailAsset =

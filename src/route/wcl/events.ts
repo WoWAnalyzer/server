@@ -50,6 +50,8 @@ export type EventsQuery = {
   actorid?: string;
   filter?: string;
   abilityid?: string;
+  hostility?: string;
+  sourceclass?: string;
 };
 
 const events = wrapEndpoint<EventsQuery>(

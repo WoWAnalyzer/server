@@ -14,6 +14,8 @@ const graphQuery = gql`
     $filter: String
     $type: GraphDataType!
     $abilityId: Float
+    $sourceclass: String
+    $hostility: HostilityType
   ) {
     reportData {
       report(code: $code) {
@@ -25,6 +27,8 @@ const graphQuery = gql`
           filterExpression: $filter
           dataType: $type
           abilityID: $abilityId
+          sourceClass: $sourceclass
+          hostilityType: $hostility
         )
       }
     }
@@ -54,6 +58,8 @@ const graph = wrapEndpoint<GraphQuery, ReportParams & { type: string }>(
         filter?: string;
         type: string;
         abilityId?: number;
+        sourceclass?: string;
+        hostility?: string;
       }
     >(graphQuery, {
       code: req.params.code,
@@ -64,6 +70,8 @@ const graph = wrapEndpoint<GraphQuery, ReportParams & { type: string }>(
       filter: req.query.filter,
       type: camelCase(req.params.type),
       abilityId: req.query.abilityid ? Number(req.query.abilityid) : undefined,
+      hostility: req.query.hostility,
+      sourceclass: req.query.sourceclass,
     });
     const { data } = rawData.reportData.report.graph;
     return data;

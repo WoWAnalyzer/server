@@ -1,6 +1,6 @@
 import * as api from "../../wcl/api";
 import { gql } from "graphql-request";
-import { compress, wrapEndpoint } from "./common";
+import { ReportParams, camelCase, compress, wrapEndpoint } from "./common";
 
 // TODO: migrate useAbilityIDs to true.
 // requires frontend changes, but means we no longer need to compress the event response (probably)
@@ -89,3 +89,40 @@ const events = wrapEndpoint<EventsQuery>(
   true,
 );
 export default events;
+
+export const eventsByType = wrapEndpoint<EventsQuery, ReportParams & { type: string }>(
+  "/i/v1/report/events/:type/:code",
+  "wcl-events",
+  async (req) => {
+    const rawData = await api.query<
+      EventData,
+      {
+        code: string;
+        translate: boolean;
+        startTime: number;
+        endTime: number;
+        playerId?: number;
+        filter?: string;
+        type?: string;
+      }
+    >(eventQuery, {
+      type: req.params.type ? camelCase(req.params.type) : undefined,
+      code: req.params.code,
+      translate: req.query.translate !== "false",
+      startTime: Number(req.query.start),
+      endTime: Number(req.query.end),
+      playerId: req.query.actorid ? Number(req.query.actorid) : undefined,
+      filter: req.query.filter,
+    });
+    const { data: events, nextPageTimestamp } =
+      rawData.reportData.report.events;
+    const data = {
+      events: events,
+      nextPageTimestamp,
+      count: events.length,
+    };
+
+    return compress(JSON.stringify(data));
+  },
+  true,
+);

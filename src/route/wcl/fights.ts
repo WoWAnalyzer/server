@@ -154,7 +154,7 @@ interface FightData {
           enemyNPCs?: Enemy[];
         }
       >;
-      phases: Array<{
+      phases?: Array<{
         boss: number;
         separatesWipes: boolean;
         phases: Array<{
@@ -256,14 +256,15 @@ function reportDataCompat({ reportData: { report } }: FightData): WCLReport {
         return fight;
       },
     ),
-    phases: report.phases.map(({ boss, phases, separatesWipes }) => ({
-      boss,
-      phases: phases.map(({ name }) => name),
-      intermissions: phases
-        .filter(({ isIntermission }) => isIntermission)
-        .map(({ id }) => id),
-      separatesWipes,
-    })),
+    phases:
+      report.phases?.map(({ boss, phases, separatesWipes }) => ({
+        boss,
+        phases: phases.map(({ name }) => name),
+        intermissions: phases
+          .filter(({ isIntermission }) => isIntermission)
+          .map(({ id }) => id),
+        separatesWipes,
+      })) ?? [],
     owner: report.owner.name,
     lang: report.masterData.lang,
     logVersion: report.masterData.logVersion,
@@ -280,7 +281,7 @@ function reportDataCompat({ reportData: { report } }: FightData): WCLReport {
     enemies: withFights(report, "enemyNPCs", mapEnemy),
     friendlyPets: withFights(report, "friendlyPets", mapPet),
     enemyPets: withFights(report, "enemyPets", mapEnemy),
-    zone: report.zone.id,
+    zone: report.zone?.id ?? 0,
     exportedCharacters: report.exportedCharacters?.map(
       ({ server, ...rest }) => ({
         ...rest,

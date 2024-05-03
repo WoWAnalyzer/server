@@ -29,13 +29,17 @@ const app = Fastify({
   logger: true,
 });
 
+const SESSION_DURATION = 365 * 24 * 60 * 60;
+
 app.register(secureSession, {
   key:
     process.env.NODE_ENV === "development"
       ? fs.readFileSync(path.join(__dirname, "../.secret-key.development"))
       : fs.readFileSync(path.join(__dirname, "../secret-key")),
+  expiry: SESSION_DURATION,
   cookie: {
     path: "/",
+    maxAge: SESSION_DURATION,
   },
 });
 app.register(cors, {

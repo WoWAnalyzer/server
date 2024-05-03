@@ -15,8 +15,8 @@ dependencies:
     specifier: ^9.7.0
     version: 9.7.0
   '@fastify/secure-session':
-    specifier: ^7.3.0
-    version: 7.3.0
+    specifier: ^7.5.1
+    version: 7.5.1
   '@sentry/node':
     specifier: ^7.76.0
     version: 7.76.0
@@ -402,8 +402,8 @@ packages:
       undici: 5.28.4
     dev: false
 
-  /@fastify/secure-session@7.3.0:
-    resolution: {integrity: sha512-9d7CMZ2OrOVsrWtkCf60weyfhQcscrnboUdnETMAAhEyUXrZtO66Zu99DH/g/VfGW1mUU5tKHq7jCkm+itvDWA==}
+  /@fastify/secure-session@7.5.1:
+    resolution: {integrity: sha512-3xnTmlI4rhboyLtXtGDnrAXz8MLbrkwn9Owo4CZ2/GC9H3Eux0D5QWwKowxmn4VaFadj2wC67RoycFFi/46xaw==}
     hasBin: true
     dependencies:
       '@fastify/cookie': 9.1.0

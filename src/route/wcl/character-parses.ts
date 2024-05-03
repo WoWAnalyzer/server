@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import axios from "axios";
 import * as cache from "../../cache";
 import * as Sentry from "@sentry/node";
+import { shouldSkipCache } from "./common";
 
 // FIXME we cheat on the character parses due to significant changes to the
 // response from WCL. specifically: it is not currently possible to get all
@@ -14,11 +15,11 @@ import * as Sentry from "@sentry/node";
 // change, we just use the v1 API for this call.
 
 type Query = {
-  _?: string;
   includeCombatantInfo?: string;
   metric: string;
   zone: string;
   timeframe?: string;
+  partition?: string;
   game?: "classic" | "retail";
 };
 
@@ -49,7 +50,7 @@ const characterParses = (app: FastifyInstance) => {
     };
     let data;
     const cacheKey = `character-parses-${req.params.region}-${req.params.server}-${req.params.name}`;
-    if (!req.query._) {
+    if (!shouldSkipCache(req)) {
       data = await cache.remember(cacheKey, thunk);
     } else {
       data = await thunk();

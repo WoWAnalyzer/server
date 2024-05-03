@@ -19,6 +19,7 @@ type Query = {
   metric: string;
   zone: string;
   timeframe?: string;
+  partition?: string;
   game?: "classic" | "retail";
 };
 

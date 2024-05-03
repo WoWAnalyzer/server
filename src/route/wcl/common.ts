@@ -53,7 +53,7 @@ export async function decompress(data: string): Promise<unknown> {
  * Wrap a request to WCL in a caching & compression layer.
  */
 export function wrapEndpoint<
-  Q extends { translate?: string; _?: string },
+  Q extends { translate?: string },
   P = ReportParams,
 >(
   url: string,
@@ -69,7 +69,7 @@ export function wrapEndpoint<
       )}-${await queryKey(req.query as Q)}`;
 
       try {
-        if ((req.query as Q)._) {
+        if (shouldSkipCache(req)) {
           const data = await thunk(req);
           if (data) {
             cache.set(cacheKey, data, timeout).catch(Sentry.captureException);
@@ -102,4 +102,15 @@ export function wrapEndpoint<
         });
       }
     });
+}
+
+export function shouldSkipCache(req: FastifyRequest): boolean {
+  const cacheControl = req.headers["cache-control"];
+  if (!cacheControl) {
+    return false;
+  }
+
+  return (
+    cacheControl.includes("no-cache") || cacheControl.includes("max-age=0")
+  );
 }

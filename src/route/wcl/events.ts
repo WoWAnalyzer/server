@@ -2,8 +2,10 @@ import * as api from "../../wcl/api";
 import { gql } from "graphql-request";
 import { ReportParams, camelCase, compress, wrapEndpoint } from "./common";
 
+const EVENT_LIMIT = 20000;
+
 // TODO: migrate useAbilityIDs to true.
-// requires frontend changes, but means we no longer need to compress the event response (probably)
+// requires frontend changes, but is more efficient
 const eventQuery = gql`
   query getEvents(
     $code: String!
@@ -12,6 +14,7 @@ const eventQuery = gql`
     $endTime: Float!
     $playerId: Int
     $filter: String
+    $limit: Int!
   ) {
     reportData {
       report(code: $code) {
@@ -23,6 +26,7 @@ const eventQuery = gql`
           filterExpression: $filter
           includeResources: true
           useAbilityIDs: false
+          limit: $limit
         ) {
           data
           nextPageTimestamp
@@ -67,6 +71,7 @@ const events = wrapEndpoint<EventsQuery>(
         endTime: number;
         playerId?: number;
         filter?: string;
+        limit: number;
       }
     >(eventQuery, {
       code: req.params.code,
@@ -75,6 +80,7 @@ const events = wrapEndpoint<EventsQuery>(
       endTime: Number(req.query.end),
       playerId: req.query.actorid ? Number(req.query.actorid) : undefined,
       filter: req.query.filter,
+      limit: EVENT_LIMIT,
     });
     const { data: events, nextPageTimestamp } =
       rawData.reportData.report.events;
@@ -90,7 +96,10 @@ const events = wrapEndpoint<EventsQuery>(
 );
 export default events;
 
-export const eventsByType = wrapEndpoint<EventsQuery, ReportParams & { type: string }>(
+export const eventsByType = wrapEndpoint<
+  EventsQuery,
+  ReportParams & { type: string }
+>(
   "/i/v1/report/events/:type/:code",
   "wcl-events",
   async (req) => {
@@ -104,6 +113,7 @@ export const eventsByType = wrapEndpoint<EventsQuery, ReportParams & { type: str
         playerId?: number;
         filter?: string;
         type?: string;
+        limit: number;
       }
     >(eventQuery, {
       type: req.params.type ? camelCase(req.params.type) : undefined,
@@ -113,6 +123,7 @@ export const eventsByType = wrapEndpoint<EventsQuery, ReportParams & { type: str
       endTime: Number(req.query.end),
       playerId: req.query.actorid ? Number(req.query.actorid) : undefined,
       filter: req.query.filter,
+      limit: EVENT_LIMIT,
     });
     const { data: events, nextPageTimestamp } =
       rawData.reportData.report.events;

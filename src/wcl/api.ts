@@ -6,7 +6,7 @@ async function fetchToken(): Promise<string | undefined> {
     `${process.env.WCL_CLIENT_ID}:${process.env.WCL_CLIENT_SECRET}`,
   ).toString("base64");
   const response = await axios.postForm(
-    "https://www.warcraftlogs.com/oauth/token",
+    `${process.env.WCL_HOST}/oauth/token`,
     {
       grant_type: "client_credentials",
     },
@@ -37,7 +37,7 @@ export async function query<T, V extends Variables>(
 ): Promise<T> {
   let token = await getToken();
   const run = () =>
-    request<T>("https://www.warcraftlogs.com/api/v2/client", gql, variables, {
+    request<T>(`${process.env.WCL_HOST}/api/v2/client`, gql, variables, {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
       "Accept-Encoding": "deflate,gzip",

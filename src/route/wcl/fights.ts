@@ -9,7 +9,6 @@ import {
   ReportPlayer,
   WCLFight,
   WCLReport,
-  WithFights,
 } from "./v1-types";
 
 const fightQuery = gql`

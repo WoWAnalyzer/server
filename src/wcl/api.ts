@@ -1,4 +1,4 @@
-import { request, Variables } from "graphql-request";
+import { ClientError, request, Variables } from "graphql-request";
 import axios from "axios";
 
 async function fetchToken(): Promise<string | undefined> {
@@ -31,6 +31,22 @@ async function getToken(force: boolean = false): Promise<string | undefined> {
   return token;
 }
 
+export enum ApiErrorType {
+  /** The log is private or does not exist. */
+  NoSuchLog,
+  Unknown,
+}
+
+export class ApiError extends Error {
+  public readonly type: ApiErrorType;
+  public readonly cause: Error;
+  constructor(cause: Error, type: ApiErrorType) {
+    super(cause.message);
+    this.cause = cause;
+    this.type = type;
+  }
+}
+
 export async function query<T, V extends Variables>(
   gql: string,
   variables: V,
@@ -46,10 +62,38 @@ export async function query<T, V extends Variables>(
   try {
     data = await run();
   } catch (error) {
-    // TODO: actually check status code
+    if (error instanceof ClientError) {
+      if (isPrivateLogError(error)) {
+        throw new ApiError(error, ApiErrorType.NoSuchLog);
+      }
+    }
+
+    // blindly attempt to reauthenticate and try again
     token = await getToken(true);
-    data = await run();
+    try {
+      data = await run();
+    } catch (error) {
+      if (error instanceof ClientError) {
+        if (isPrivateLogError(error)) {
+          throw new ApiError(error, ApiErrorType.NoSuchLog);
+        }
+
+        // we only use Unknown here after attempting to re-auth to make sure that the re-auth happens
+        throw new ApiError(error, ApiErrorType.Unknown);
+      }
+
+      throw error;
+    }
   }
 
   return data;
+}
+
+function isPrivateLogError(error: ClientError): boolean {
+  return (
+    error.response.errors?.some(
+      (err) =>
+        err.message === "You do not have permission to view this report.",
+    ) === true
+  );
 }

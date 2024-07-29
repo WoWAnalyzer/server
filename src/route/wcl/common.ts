@@ -3,6 +3,7 @@ import * as crypto from "node:crypto";
 import { FastifyInstance, FastifyRequest } from "fastify";
 import * as cache from "../../cache.ts";
 import * as Sentry from "@sentry/node";
+import { ApiError, ApiErrorType } from "../../wcl/api.ts";
 
 export type WclProxy<T, P = ReportParams> = { Params: P; Querystring: T };
 export type ReportParams = { code: string };
@@ -95,6 +96,14 @@ export function wrapEndpoint<
           }
         }
       } catch (error) {
+        if (
+          error instanceof ApiError &&
+          error.type === ApiErrorType.NoSuchLog
+        ) {
+          return reply.code(404).send({
+            message: "No log found with that code.",
+          });
+        }
         console.error(error);
         // TODO handle error
         return reply.code(500).send({

@@ -43,7 +43,11 @@ app.register(secureSession, {
   },
 });
 app.register(cors, {
-  origin: [/localhost:3000/, /wowanalyzer.com/],
+  origin: [
+    /127\.0\.0\.1:[0-9]{2,5}/,
+    /localhost:[0-9]{2,5}/,
+    /wowanalyzer.com/,
+  ],
   credentials: true,
 });
 

@@ -55,7 +55,7 @@ app.setErrorHandler((err, _request, reply) => {
   console.error("uncaught exception", err);
   Sentry.captureException(err);
   return reply.status(500).send({
-    error: err,
+    error: err.message,
   });
 });
 

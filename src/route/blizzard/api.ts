@@ -242,13 +242,16 @@ async function fetchApi<T>(
     return undefined;
   }
   const accessToken = await fetchAccessToken(region);
-  const url = makeUrl(region, path, {
-    access_token: accessToken,
-    ...query,
-  });
+  const url = makeUrl(region, path, query);
 
   try {
-    return (await axios.get(url))?.data;
+    return (
+      await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
+    )?.data;
   } catch (err: unknown) {
     if (
       err instanceof AxiosError &&

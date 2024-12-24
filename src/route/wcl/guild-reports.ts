@@ -1,6 +1,7 @@
 import { wrapEndpoint } from "./common";
 import * as api from "../../wcl/api";
 import { gql } from "graphql-request";
+import { GameType } from "../../wcl/api";
 
 interface Input {
   id: string;
@@ -69,14 +70,19 @@ const guildReports = wrapEndpoint<{
   translate?: string;
   _?: string;
   start?: string;
+  game?: string;
 }>(
   "/i/v1/reports/guild/:name/:server/:region",
   "wcl-reports",
   async (req) => {
-    const rawData: QueryData = await api.query(query, {
-      ...req.params,
-      start: Number(req.query.start),
-    });
+    const rawData: QueryData = await api.query(
+      query,
+      {
+        ...req.params,
+        start: Number(req.query.start),
+      },
+      req.query.game === "classic" ? GameType.Classic : GameType.Retail,
+    );
 
     return rawData.reportData.reports.data.map(mapReportData);
   },

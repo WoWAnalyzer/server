@@ -6,7 +6,7 @@ async function fetchToken(): Promise<string | undefined> {
     `${process.env.WCL_CLIENT_ID}:${process.env.WCL_CLIENT_SECRET}`,
   ).toString("base64");
   const response = await axios.postForm(
-    `${process.env.WCL_HOST}/oauth/token`,
+    `https://www.${process.env.WCL_PRIMARY_DOMAIN}/oauth/token`,
     {
       grant_type: "client_credentials",
     },
@@ -47,17 +47,38 @@ export class ApiError extends Error {
   }
 }
 
+export enum GameType {
+  Retail,
+  Classic,
+}
+
+function subdomain(gameType: GameType): string {
+  if (gameType === GameType.Classic) {
+    return "classic";
+  }
+
+  return "www";
+}
+
 export async function query<T, V extends Variables>(
   gql: string,
   variables: V,
+  gameType: GameType = GameType.Retail,
 ): Promise<T> {
   let token = await getToken();
   const run = () =>
-    request<T>(`${process.env.WCL_HOST}/api/v2/client`, gql, variables, {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      "Accept-Encoding": "deflate,gzip",
-    });
+    request<T>(
+      `https://${subdomain(gameType)}.${
+        process.env.WCL_PRIMARY_DOMAIN
+      }/api/v2/client`,
+      gql,
+      variables,
+      {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "Accept-Encoding": "deflate,gzip",
+      },
+    );
   let data;
   try {
     data = await run();

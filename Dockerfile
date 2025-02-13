@@ -1,5 +1,7 @@
 FROM node:21-alpine as build
 
+RUN apk add gcompat
+
 # Install PNPM
 RUN wget -qO /bin/pnpm "https://github.com/pnpm/pnpm/releases/latest/download/pnpm-linuxstatic-x64" && chmod +x /bin/pnpm
 
@@ -7,7 +9,7 @@ WORKDIR /usr/src/app/
 
 # By doing this separate we allow Docker to cache this
 COPY package.json pnpm-lock.yaml /usr/src/app/
-RUN pnpm install 
+RUN pnpm install
 
 USER node
 EXPOSE 3001

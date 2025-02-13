@@ -15,6 +15,7 @@ const eventQuery = gql`
     $playerId: Int
     $filter: String
     $limit: Int!
+    $type: EventDataType
   ) {
     reportData {
       report(code: $code) {
@@ -27,6 +28,7 @@ const eventQuery = gql`
           includeResources: true
           useAbilityIDs: false
           limit: $limit
+          dataType: $type
         ) {
           data
           nextPageTimestamp

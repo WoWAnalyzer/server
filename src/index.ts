@@ -16,6 +16,7 @@ import user from "./route/user/index.ts";
 import * as blizzard from "./route/blizzard";
 import * as gameData from "./route/game-data";
 import wcl from "./route/wcl";
+import serverMetrics from "./route/metrics.ts";
 
 env.setup();
 
@@ -71,6 +72,7 @@ app.register(blizzard.guild);
 app.register(gameData.spells);
 app.register(gameData.items);
 app.register(wcl);
+app.register(serverMetrics);
 
 app.register(replyFrom, {
   base: process.env.SPA_PROXY_HOST,

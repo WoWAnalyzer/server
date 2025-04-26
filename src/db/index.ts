@@ -1,4 +1,4 @@
-import { Sequelize, Options, Dialect } from "sequelize";
+import { Sequelize } from "sequelize";
 import config from "./config.ts";
 
 if (!config.database) {

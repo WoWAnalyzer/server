@@ -62,18 +62,24 @@ const tables = wrapEndpoint<TableQuery, ReportParams & { type: string }>(
         sourceclass?: string;
         hostility?: string;
       }
-    >(tableQuery, {
-      code: req.params.code,
-      translate: req.query.translate !== "false",
-      startTime: Number(req.query.start),
-      endTime: Number(req.query.end),
-      playerId: req.query.actorid ? Number(req.query.actorid) : undefined,
-      filter: req.query.filter,
-      type: camelCase(req.params.type),
-      abilityId: req.query.abilityid ? Number(req.query.abilityid) : undefined,
-      hostility: req.query.hostility,
-      sourceclass: req.query.sourceclass,
-    });
+    >(
+      tableQuery,
+      {
+        code: req.params.code,
+        translate: req.query.translate !== "false",
+        startTime: Number(req.query.start),
+        endTime: Number(req.query.end),
+        playerId: req.query.actorid ? Number(req.query.actorid) : undefined,
+        filter: req.query.filter,
+        type: camelCase(req.params.type),
+        abilityId: req.query.abilityid
+          ? Number(req.query.abilityid)
+          : undefined,
+        hostility: req.query.hostility,
+        sourceclass: req.query.sourceclass,
+      },
+      req.user?.data.wcl?.accessToken
+    );
     const { data } = rawData.reportData.report.table;
     return data;
   },

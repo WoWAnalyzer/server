@@ -75,15 +75,19 @@ const events = wrapEndpoint<EventsQuery>(
         filter?: string;
         limit: number;
       }
-    >(eventQuery, {
-      code: req.params.code,
-      translate: req.query.translate !== "false",
-      startTime: Number(req.query.start),
-      endTime: Number(req.query.end),
-      playerId: req.query.actorid ? Number(req.query.actorid) : undefined,
-      filter: req.query.filter,
-      limit: EVENT_LIMIT,
-    });
+    >(
+      eventQuery,
+      {
+        code: req.params.code,
+        translate: req.query.translate !== "false",
+        startTime: Number(req.query.start),
+        endTime: Number(req.query.end),
+        playerId: req.query.actorid ? Number(req.query.actorid) : undefined,
+        filter: req.query.filter,
+        limit: EVENT_LIMIT,
+      },
+      req.user?.data.wcl?.accessToken
+    );
     const { data: events, nextPageTimestamp } =
       rawData.reportData.report.events;
     const data = {
@@ -117,16 +121,20 @@ export const eventsByType = wrapEndpoint<
         type?: string;
         limit: number;
       }
-    >(eventQuery, {
-      type: req.params.type ? camelCase(req.params.type) : undefined,
-      code: req.params.code,
-      translate: req.query.translate !== "false",
-      startTime: Number(req.query.start),
-      endTime: Number(req.query.end),
-      playerId: req.query.actorid ? Number(req.query.actorid) : undefined,
-      filter: req.query.filter,
-      limit: EVENT_LIMIT,
-    });
+    >(
+      eventQuery,
+      {
+        type: req.params.type ? camelCase(req.params.type) : undefined,
+        code: req.params.code,
+        translate: req.query.translate !== "false",
+        startTime: Number(req.query.start),
+        endTime: Number(req.query.end),
+        playerId: req.query.actorid ? Number(req.query.actorid) : undefined,
+        filter: req.query.filter,
+        limit: EVENT_LIMIT,
+      },
+      req.user?.data.wcl?.accessToken
+    );
     const { data: events, nextPageTimestamp } =
       rawData.reportData.report.events;
     const data = {

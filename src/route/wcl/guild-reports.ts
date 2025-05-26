@@ -81,7 +81,8 @@ const guildReports = wrapEndpoint<{
         ...req.params,
         start: Number(req.query.start),
       },
-      req.query.game === "classic" ? GameType.Classic : GameType.Retail,
+      req.user?.data.wcl?.accessToken,
+      req.query.game === "classic" ? GameType.Classic : GameType.Retail
     );
 
     return rawData.reportData.reports.data.map(mapReportData);

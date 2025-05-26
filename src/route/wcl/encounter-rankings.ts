@@ -58,14 +58,18 @@ const encounterRankings = wrapEndpoint<
         metric?: string;
         includeCombatantInfo?: boolean;
       }
-    >(query, {
-      encounterId: Number(req.params.encounterId),
-      class: req.query.className,
-      spec: req.query.specName,
-      difficulty: Number(req.query.difficulty),
-      metric: req.query.metric,
-      includeCombatantInfo: req.query.includeCombatantInfo !== "false",
-    });
+    >(
+      query,
+      {
+        encounterId: Number(req.params.encounterId),
+        class: req.query.className,
+        spec: req.query.specName,
+        difficulty: Number(req.query.difficulty),
+        metric: req.query.metric,
+        includeCombatantInfo: req.query.includeCombatantInfo !== "false",
+      },
+      req.user?.data.wcl?.accessToken
+    );
 
     return rawData.worldData.encounter.characterRankings;
   },

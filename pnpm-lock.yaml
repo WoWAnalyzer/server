@@ -72,6 +72,9 @@ importers:
       '@types/passport-github':
         specifier: ^1.1.11
         version: 1.1.11
+      '@types/passport-oauth2':
+        specifier: ^1.4.17
+        version: 1.4.17
       eslint:
         specifier: ^8.52.0
         version: 8.52.0
@@ -388,8 +391,8 @@ packages:
   '@types/passport-github@1.1.11':
     resolution: {integrity: sha512-V2t1/P8BnnFX8AOYpk0ep9p4p7u2V1KdQBSUIvSvcxMseu7n2+cTLCr3rat8K876caQ1C95Y9vprVBbtLVVYXg==}
 
-  '@types/passport-oauth2@1.4.14':
-    resolution: {integrity: sha512-wZBvnRwqdvm35l1Jn9ebYm2Q7UtxYIdBu1PjoKXMoxJytniVjXxYJmrlDXn5fMZROWbJbnEnp1XSDANqtvMdGQ==}
+  '@types/passport-oauth2@1.4.17':
+    resolution: {integrity: sha512-ODiAHvso6JcWJ6ZkHHroVp05EHGhqQN533PtFNBkg8Fy5mERDqsr030AX81M0D69ZcaMvhF92SRckEk2B0HYYg==}
 
   '@types/passport@1.0.14':
     resolution: {integrity: sha512-D6p2ygR2S7Cq5PO7iUaEIQu/5WrM0tONu6Lxgk0C9r3lafQIlVpWCo3V/KI9To3OqHBxcfQaOeK+8AvwW5RYmw==}
@@ -1819,9 +1822,9 @@ snapshots:
     dependencies:
       '@types/express': 4.17.20
       '@types/passport': 1.0.14
-      '@types/passport-oauth2': 1.4.14
+      '@types/passport-oauth2': 1.4.17
 
-  '@types/passport-oauth2@1.4.14':
+  '@types/passport-oauth2@1.4.17':
     dependencies:
       '@types/express': 4.17.20
       '@types/oauth': 0.9.3

@@ -3,6 +3,7 @@ import passport from "@fastify/passport";
 
 import githubStrategy, { refreshGitHubLastContribution } from "./github.ts";
 import patreonStrategy, { refreshPatreonProfile } from "./patreon.ts";
+import wclStrategy from "./wcl.ts";
 import User from "../../models/User.ts";
 import { addDays, differenceInDays } from "date-fns";
 import type { AnyStrategy } from "@fastify/passport/dist/strategies/index";
@@ -50,7 +51,7 @@ const user: FastifyPluginCallback = (app, _, done) => {
     app.get("/login/patreon", passport.authenticate("patreon"));
     app.get(
       "/login/patreon/callback",
-      passport.authenticate("patreon", options),
+      passport.authenticate("patreon", options)
     );
   } else {
     console.warn("Unable to initialize Patreon auth. Patreon login disabled");
@@ -61,6 +62,13 @@ const user: FastifyPluginCallback = (app, _, done) => {
     app.get("/login/github/callback", passport.authenticate("github", options));
   } else {
     console.warn("Unable to initialize Github auth. Github login disabled");
+  }
+  if (wclStrategy) {
+    passport.use(wclStrategy);
+    app.get("/login/wcl", passport.authenticate("wcl"));
+    app.get("/login/wcl/callback", passport.authenticate("wcl", options));
+  } else {
+    console.warn("Unable to initialize Wcl auth. Wcl login disabled");
   }
 
   // note that the frontend makes a GET for logouts
@@ -112,7 +120,7 @@ const user: FastifyPluginCallback = (app, _, done) => {
         premium: true,
         expires: addDays(
           github?.lastContribution ?? 0,
-          GITHUB_COMMIT_PREMIUM_DURATION_DAYS,
+          GITHUB_COMMIT_PREMIUM_DURATION_DAYS
         ),
       };
     }

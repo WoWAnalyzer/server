@@ -66,8 +66,10 @@ export function wrapEndpoint<
   return (app: FastifyInstance) =>
     app.get<WclProxy<Q, P>>(url, async (req, reply) => {
       const cacheKey = `${keyPrefix}-${await queryKey(
-        req.params as ReportParams & P,
-      )}-${await queryKey(req.query as Q)}`;
+        req.params as ReportParams & P
+      )}-${await queryKey(req.query as Q)}${
+        req.user?.wclId ? `-${req.user.wclId}` : ""
+      }`;
 
       try {
         if (shouldSkipCache(req)) {

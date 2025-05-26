@@ -1,7 +1,7 @@
 import * as api from "../../wcl/api";
 import { gql } from "graphql-request";
 import User from "../../models/User";
-import { addDays } from "date-fns";
+import { addSeconds } from "date-fns";
 import {
   Strategy as OAuth2Strategy,
   StrategyOptions,
@@ -18,6 +18,12 @@ const userInfoQuery = gql`
     }
   }
 `;
+
+type WclTokenResponse = {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+};
 
 type WclUserInfo = {
   userData: {
@@ -90,6 +96,7 @@ const wcl =
         async function (
           accessToken: string,
           refreshToken: string,
+          params: WclTokenResponse,
           profile: WclProfile,
           done: (err: null, user: User) => void
         ) {
@@ -108,7 +115,7 @@ const wcl =
                 wcl: {
                   accessToken: accessToken,
                   refreshToken: refreshToken,
-                  expiresAt: addDays(Date.now(), 1),
+                  expiresAt: addSeconds(Date.now(), params.expires_in),
                 },
               },
             },
@@ -122,7 +129,7 @@ const wcl =
                 wcl: {
                   accessToken,
                   refreshToken,
-                  expiresAt: addDays(Date.now(), 1),
+                  expiresAt: addSeconds(Date.now(), params.expires_in),
                 },
               },
             });

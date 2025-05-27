@@ -2,7 +2,6 @@ import { ClientError, request, Variables } from "graphql-request";
 import axios from "axios";
 import * as cache from "../cache.ts";
 import { userRefreshTokenKey } from "../route/user/wcl.ts";
-import * as Sentry from "@sentry/node";
 
 async function fetchToken(): Promise<string | undefined> {
   const basicAuth = Buffer.from(
@@ -24,61 +23,16 @@ async function fetchToken(): Promise<string | undefined> {
   return response.data?.access_token;
 }
 
-async function fetchUserToken(
-  refreshToken: string
-): Promise<string | undefined> {
-  const basicAuth = Buffer.from(
-    `${process.env.WCL_CLIENT_ID}:${process.env.WCL_CLIENT_SECRET}`
-  ).toString("base64");
-  for (let i = 0; i < 3; i++) {
-    try {
-      const response = await axios.postForm(
-        `https://www.${process.env.WCL_PRIMARY_DOMAIN}/oauth/token`,
-        {
-          grant_type: "client_credentials",
-          code: refreshToken,
-          redirect_uri: process.env.WCL_REDIRECT_URL,
-        },
-        {
-          headers: {
-            Accept: "application/json",
-            Authorization: `Basic ${basicAuth}`,
-          },
-        }
-      );
-      return response.data?.access_token;
-    } catch (error) {
-      if (error instanceof Error) {
-        console.log(error.cause, error.message, error.name);
-        /* if (error.response?.status === 400) {
-          throw new Error("Invalid refresh token");
-        } */
-      }
-    }
-  }
-}
-
-async function getUserToken(
-  userToken: {
-    refreshToken?: string;
-    accessToken?: string;
-  },
-  force: boolean = false
-): Promise<string | undefined> {
+async function getUserToken(userToken: {
+  refreshToken?: string;
+  accessToken?: string;
+}): Promise<string | undefined> {
   if (userToken.accessToken) return userToken.accessToken;
   if (!userToken.refreshToken) return undefined;
 
-  const key = await userRefreshTokenKey(userToken.refreshToken);
-
-  let accessToken;
-  if (force) {
-    accessToken = await fetchUserToken(userToken.refreshToken);
-    await cache.set(key, accessToken).catch(Sentry.captureException);
-  } else {
-    accessToken = await cache.remember(key, () =>
-      fetchUserToken(userToken.refreshToken!)
-    );
-  }
+  const accessToken = await cache.get<string>(
+    await userRefreshTokenKey(userToken.refreshToken)
+  );
   return accessToken;
 }
 
@@ -158,9 +112,7 @@ export async function query<T, V extends Variables>(
     }
 
     // blindly attempt to reauthenticate and try again
-    token = hasUserToken
-      ? await getUserToken(userToken, true)
-      : await getToken(true);
+    token = hasUserToken ? await getUserToken(userToken) : await getToken(true);
     try {
       data = await run();
     } catch (error) {

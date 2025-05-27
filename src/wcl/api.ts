@@ -1,7 +1,7 @@
 import { ClientError, request, Variables } from "graphql-request";
 import axios from "axios";
 import * as cache from "../cache.ts";
-import { userRefreshTokenKey } from "../route/user/wcl.ts";
+import { userInfoQuery, userRefreshTokenKey } from "../route/user/wcl.ts";
 
 async function fetchToken(): Promise<string | undefined> {
   const basicAuth = Buffer.from(
@@ -36,6 +36,23 @@ async function getUserToken(userToken: {
   return accessToken;
 }
 
+async function isValidUserToken(accessToken?: string) {
+  if (!accessToken) return;
+  try {
+    const isValid = await request(
+      `https://www.${process.env.WCL_PRIMARY_DOMAIN}/api/v2/user`,
+      userInfoQuery,
+      {},
+      {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "Accept-Encoding": "deflate,gzip",
+      }
+    );
+    return !!isValid;
+  } catch (error) {}
+}
+
 // TODO: refresh token
 let token: string | undefined = undefined;
 async function getToken(force: boolean = false): Promise<string | undefined> {
@@ -50,6 +67,7 @@ export enum ApiErrorType {
   /** The log is private or does not exist. */
   NoSuchLog,
   Unknown,
+  Unauthorized,
 }
 
 export class ApiError extends Error {
@@ -109,6 +127,10 @@ export async function query<T, V extends Variables>(
       if (isPrivateLogError(error)) {
         throw new ApiError(error, ApiErrorType.NoSuchLog);
       }
+
+      if (hasUserToken && !(await isValidUserToken(token))) {
+        throw new ApiError(error, ApiErrorType.Unauthorized);
+      }
     }
 
     // blindly attempt to reauthenticate and try again
@@ -119,6 +141,9 @@ export async function query<T, V extends Variables>(
       if (error instanceof ClientError) {
         if (isPrivateLogError(error)) {
           throw new ApiError(error, ApiErrorType.NoSuchLog);
+        }
+        if (hasUserToken && !(await isValidUserToken(token))) {
+          throw new ApiError(error, ApiErrorType.Unauthorized);
         }
 
         // we only use Unknown here after attempting to re-auth to make sure that the re-auth happens

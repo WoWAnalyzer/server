@@ -12,7 +12,7 @@ import * as Sentry from "@sentry/node";
 import * as crypto from "node:crypto";
 import axios, { AxiosError } from "axios";
 
-const userInfoQuery = gql`
+export const userInfoQuery = gql`
   query {
     userData {
       currentUser {

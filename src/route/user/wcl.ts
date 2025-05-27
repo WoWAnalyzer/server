@@ -130,7 +130,7 @@ const wcl =
                 wcl: {
                   accessToken: accessToken,
                   refreshToken: refreshToken,
-                  expiresAt: addSeconds(Date.now(), params.expires_in),
+                  expiresAt: Date.now() + params.expires_in * 1000,
                 },
               },
             },
@@ -144,7 +144,7 @@ const wcl =
                 wcl: {
                   accessToken,
                   refreshToken,
-                  expiresAt: addSeconds(Date.now(), params.expires_in),
+                  expiresAt: Date.now() + params.expires_in * 1000,
                 },
               },
             });

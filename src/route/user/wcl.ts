@@ -10,6 +10,7 @@ import {
 import * as cache from "../../cache.ts";
 import * as Sentry from "@sentry/node";
 import * as crypto from "node:crypto";
+import axios, { AxiosError } from "axios";
 
 const userInfoQuery = gql`
   query {
@@ -26,6 +27,7 @@ type WclTokenResponse = {
   access_token: string;
   token_type: string;
   expires_in: number;
+  refresh_token?: string;
 };
 
 type WclUserInfo = {
@@ -66,6 +68,91 @@ async function fetchWclProfile(
 ): Promise<WclProfile> {
   const profile = await fetchRawWclProfile(accessToken);
   return parseWclProfile(profile);
+}
+
+async function refreshToken(
+  refreshToken: string
+): Promise<WclTokenResponse | undefined> {
+  const basicAuth = Buffer.from(
+    `${process.env.WCL_CLIENT_ID}:${process.env.WCL_CLIENT_SECRET}`
+  ).toString("base64");
+
+  try {
+    const response = await axios.postForm(
+      `https://www.${process.env.WCL_PRIMARY_DOMAIN}/oauth/token`,
+      {
+        grant_type: "refresh_token",
+        refresh_token: refreshToken,
+      },
+      {
+        headers: {
+          Accept: "application/json",
+          Authorization: `Basic ${basicAuth}`,
+        },
+      }
+    );
+
+    if (!response.data.refresh_token) {
+      throw new Error("Missing refresh token");
+    }
+
+    return response.data;
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      switch (error.response?.data.hint) {
+        case "Token has been revoked":
+        case "Authorization code has been revoked":
+          throw new Error("Token has been revoked");
+        case "Token has expired":
+          throw new Error("Token has expired");
+      }
+    }
+    throw new Error("Unknown error");
+  }
+}
+
+export async function refreshWclProfile(user: User) {
+  console.log(`Refreshing Wcl data for ${user.data.name} (${user.wclId})`);
+  if (!user.data.wcl) {
+    return;
+  }
+
+  let tokenResponse;
+  try {
+    tokenResponse = await refreshToken(user.data.wcl.refreshToken);
+  } catch (error) {
+    if (error instanceof Error) {
+      console.log("tokenResponse-error", error.message);
+    }
+  }
+
+  if (!tokenResponse || !tokenResponse.refresh_token) {
+    return;
+  }
+
+  const wclProfile = await fetchWclProfile(
+    tokenResponse.access_token,
+    tokenResponse.refresh_token
+  );
+
+  await cache
+    .set(
+      await userRefreshTokenKey(tokenResponse.refresh_token),
+      tokenResponse.access_token
+    )
+    .catch(Sentry.captureException);
+
+  await user.update({
+    data: {
+      ...user.data,
+      name: wclProfile.name,
+      wcl: {
+        accessToken: tokenResponse.access_token,
+        refreshToken: tokenResponse.refresh_token,
+        expiresAt: Date.now() + tokenResponse.expires_in * 1000,
+      },
+    },
+  });
 }
 
 export async function userRefreshTokenKey(refreshToken: string) {

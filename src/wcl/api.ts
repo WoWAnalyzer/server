@@ -2,6 +2,7 @@ import { ClientError, request, Variables } from "graphql-request";
 import axios from "axios";
 import * as cache from "../cache.ts";
 import { refreshTokenKey, refreshWclToken } from "../route/user/wcl.ts";
+import * as Sentry from "@sentry/node";
 
 async function fetchToken(): Promise<string | undefined> {
   const basicAuth = Buffer.from(
@@ -23,21 +24,33 @@ async function fetchToken(): Promise<string | undefined> {
   return response.data?.access_token;
 }
 
+async function getUserToken(
+  userToken: {
+    refreshToken?: string;
+    accessToken?: string;
+  },
+  force: boolean = false
+): Promise<string | undefined> {
+  if (userToken.accessToken) return userToken.accessToken;
+  if (!userToken.refreshToken) return undefined;
+
+  const key = await refreshTokenKey(userToken.refreshToken);
+
+  let accessToken;
+  if (force) {
+    accessToken = await refreshWclToken(userToken.refreshToken);
+    await cache.set(key, accessToken).catch(Sentry.captureException);
+  } else {
+    accessToken = await cache.remember(key, () =>
+      refreshWclToken(userToken.refreshToken!)
+    );
+  }
+  return accessToken;
+}
+
 // TODO: refresh token
 let token: string | undefined = undefined;
-async function getToken(
-  force: boolean = false,
-  refreshToken?: string
-): Promise<string | undefined> {
-  if (refreshToken) {
-    const key = await refreshTokenKey(refreshToken);
-    const userToken = await cache.remember(key, () =>
-      refreshWclToken(refreshToken)
-    );
-    if (userToken) {
-      return userToken;
-    }
-  }
+async function getToken(force: boolean = false): Promise<string | undefined> {
   if (!force && token) {
     return token;
   }
@@ -83,14 +96,15 @@ export async function query<T, V extends Variables>(
   },
   gameType: GameType = GameType.Retail
 ): Promise<T> {
-  //let token = userToken ?? (await getToken());
-  let token =
-    userToken?.accessToken ?? (await getToken(false, userToken?.refreshToken));
+  const hasUserToken =
+    userToken?.accessToken !== undefined ||
+    userToken?.refreshToken !== undefined;
+  let token = hasUserToken ? await getUserToken(userToken) : await getToken();
   const run = () =>
     request<T>(
       `https://${subdomain(gameType)}.${
         process.env.WCL_PRIMARY_DOMAIN
-      }/api/v2/${userToken ? "user" : "client"}`,
+      }/api/v2/${hasUserToken ? "user" : "client"}`,
       gql,
       variables,
       {
@@ -110,7 +124,9 @@ export async function query<T, V extends Variables>(
     }
 
     // blindly attempt to reauthenticate and try again
-    token = await getToken(true);
+    token = hasUserToken
+      ? await getUserToken(userToken, true)
+      : await getToken(true);
     try {
       data = await run();
     } catch (error) {

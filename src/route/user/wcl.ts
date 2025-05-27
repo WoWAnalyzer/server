@@ -27,7 +27,10 @@ type WclTokenResponse = {
   access_token: string;
   token_type: string;
   expires_in: number;
-  refresh_token?: string;
+};
+
+type WclRefreshTokenResponse = WclTokenResponse & {
+  refresh_token: string;
 };
 
 type WclUserInfo = {
@@ -72,7 +75,7 @@ async function fetchWclProfile(
 
 async function refreshToken(
   refreshToken: string
-): Promise<WclTokenResponse | undefined> {
+): Promise<WclRefreshTokenResponse | undefined> {
   const basicAuth = Buffer.from(
     `${process.env.WCL_CLIENT_ID}:${process.env.WCL_CLIENT_SECRET}`
   ).toString("base64");
@@ -126,7 +129,7 @@ export async function refreshWclProfile(user: User) {
     }
   }
 
-  if (!tokenResponse || !tokenResponse.refresh_token) {
+  if (!tokenResponse) {
     return;
   }
 

@@ -1,7 +1,7 @@
 import { ClientError, request, Variables } from "graphql-request";
 import axios from "axios";
 import * as cache from "../cache.ts";
-import { refreshTokenKey, refreshWclToken } from "../route/user/wcl.ts";
+import { userRefreshTokenKey } from "../route/user/wcl.ts";
 import * as Sentry from "@sentry/node";
 
 async function fetchToken(): Promise<string | undefined> {
@@ -24,6 +24,40 @@ async function fetchToken(): Promise<string | undefined> {
   return response.data?.access_token;
 }
 
+async function fetchUserToken(
+  refreshToken: string
+): Promise<string | undefined> {
+  const basicAuth = Buffer.from(
+    `${process.env.WCL_CLIENT_ID}:${process.env.WCL_CLIENT_SECRET}`
+  ).toString("base64");
+  for (let i = 0; i < 3; i++) {
+    try {
+      const response = await axios.postForm(
+        `https://www.${process.env.WCL_PRIMARY_DOMAIN}/oauth/token`,
+        {
+          grant_type: "client_credentials",
+          code: refreshToken,
+          redirect_uri: process.env.WCL_REDIRECT_URL,
+        },
+        {
+          headers: {
+            Accept: "application/json",
+            Authorization: `Basic ${basicAuth}`,
+          },
+        }
+      );
+      return response.data?.access_token;
+    } catch (error) {
+      if (error instanceof Error) {
+        console.log(error.cause, error.message, error.name);
+        /* if (error.response?.status === 400) {
+          throw new Error("Invalid refresh token");
+        } */
+      }
+    }
+  }
+}
+
 async function getUserToken(
   userToken: {
     refreshToken?: string;
@@ -34,15 +68,15 @@ async function getUserToken(
   if (userToken.accessToken) return userToken.accessToken;
   if (!userToken.refreshToken) return undefined;
 
-  const key = await refreshTokenKey(userToken.refreshToken);
+  const key = await userRefreshTokenKey(userToken.refreshToken);
 
   let accessToken;
   if (force) {
-    accessToken = await refreshWclToken(userToken.refreshToken);
+    accessToken = await fetchUserToken(userToken.refreshToken);
     await cache.set(key, accessToken).catch(Sentry.captureException);
   } else {
     accessToken = await cache.remember(key, () =>
-      refreshWclToken(userToken.refreshToken!)
+      fetchUserToken(userToken.refreshToken!)
     );
   }
   return accessToken;

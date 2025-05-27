@@ -77,11 +77,13 @@ const graph = wrapEndpoint<GraphQuery, ReportParams & { type: string }>(
         hostility: req.query.hostility,
         sourceclass: req.query.sourceclass,
       },
-      req.user?.data.wcl?.accessToken
+      {
+        refreshToken: req.user?.data.wcl?.refreshToken,
+      }
     );
     const { data } = rawData.reportData.report.graph;
     return data;
-  },
+  }
 );
 
 export default graph;

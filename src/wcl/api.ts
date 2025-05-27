@@ -1,5 +1,7 @@
 import { ClientError, request, Variables } from "graphql-request";
 import axios from "axios";
+import * as cache from "../cache.ts";
+import { refreshTokenKey, refreshWclToken } from "../route/user/wcl.ts";
 
 async function fetchToken(): Promise<string | undefined> {
   const basicAuth = Buffer.from(
@@ -23,7 +25,19 @@ async function fetchToken(): Promise<string | undefined> {
 
 // TODO: refresh token
 let token: string | undefined = undefined;
-async function getToken(force: boolean = false): Promise<string | undefined> {
+async function getToken(
+  force: boolean = false,
+  refreshToken?: string
+): Promise<string | undefined> {
+  if (refreshToken) {
+    const key = await refreshTokenKey(refreshToken);
+    const userToken = await cache.remember(key, () =>
+      refreshWclToken(refreshToken)
+    );
+    if (userToken) {
+      return userToken;
+    }
+  }
   if (!force && token) {
     return token;
   }
@@ -63,10 +77,15 @@ function subdomain(gameType: GameType): string {
 export async function query<T, V extends Variables>(
   gql: string,
   variables: V,
-  userToken?: string,
+  userToken?: {
+    refreshToken?: string;
+    accessToken?: string;
+  },
   gameType: GameType = GameType.Retail
 ): Promise<T> {
-  let token = userToken ?? (await getToken());
+  //let token = userToken ?? (await getToken());
+  let token =
+    userToken?.accessToken ?? (await getToken(false, userToken?.refreshToken));
   const run = () =>
     request<T>(
       `https://${subdomain(gameType)}.${

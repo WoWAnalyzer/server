@@ -86,7 +86,9 @@ const events = wrapEndpoint<EventsQuery>(
         filter: req.query.filter,
         limit: EVENT_LIMIT,
       },
-      req.user?.data.wcl?.accessToken
+      {
+        refreshToken: req.user?.data.wcl?.refreshToken,
+      }
     );
     const { data: events, nextPageTimestamp } =
       rawData.reportData.report.events;
@@ -98,7 +100,7 @@ const events = wrapEndpoint<EventsQuery>(
 
     return compress(JSON.stringify(data));
   },
-  true,
+  true
 );
 export default events;
 
@@ -133,7 +135,9 @@ export const eventsByType = wrapEndpoint<
         filter: req.query.filter,
         limit: EVENT_LIMIT,
       },
-      req.user?.data.wcl?.accessToken
+      {
+        refreshToken: req.user?.data.wcl?.refreshToken,
+      }
     );
     const { data: events, nextPageTimestamp } =
       rawData.reportData.report.events;
@@ -145,5 +149,5 @@ export const eventsByType = wrapEndpoint<
 
     return compress(JSON.stringify(data));
   },
-  true,
+  true
 );

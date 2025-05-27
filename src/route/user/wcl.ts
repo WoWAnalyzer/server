@@ -7,6 +7,10 @@ import {
   StrategyOptions,
   VerifyFunction,
 } from "passport-oauth2";
+import * as cache from "../../cache.ts";
+import * as Sentry from "@sentry/node";
+import axios from "axios";
+import * as crypto from "node:crypto";
 
 const userInfoQuery = gql`
   query {
@@ -40,7 +44,9 @@ async function fetchRawWclProfile(accessToken: string): Promise<WclUserInfo> {
   const response = await api.query<WclUserInfo, {}>(
     userInfoQuery,
     {},
-    accessToken
+    {
+      accessToken,
+    }
   );
 
   return response;
@@ -61,6 +67,46 @@ async function fetchWclProfile(
 ): Promise<WclProfile> {
   const profile = await fetchRawWclProfile(accessToken);
   return parseWclProfile(profile);
+}
+
+export async function refreshWclToken(
+  refreshToken: string
+): Promise<string | undefined> {
+  const basicAuth = Buffer.from(
+    `${process.env.WCL_CLIENT_ID}:${process.env.WCL_CLIENT_SECRET}`
+  ).toString("base64");
+  for (let i = 0; i < 3; i++) {
+    try {
+      const response = await axios.postForm(
+        `https://www.${process.env.WCL_PRIMARY_DOMAIN}/oauth/token`,
+        {
+          grant_type: "client_credentials",
+          code: refreshToken,
+          redirect_uri: process.env.WCL_REDIRECT_URL,
+        },
+        {
+          headers: {
+            Accept: "application/json",
+            Authorization: `Basic ${basicAuth}`,
+          },
+        }
+      );
+      return response.data.access_token;
+    } catch (error) {
+      if (error instanceof Error) {
+        console.log(error.cause, error.message, error.name);
+        /* if (error.response?.status === 400) {
+          throw new Error("Invalid refresh token");
+        } */
+      }
+    }
+  }
+}
+
+export async function refreshTokenKey(refreshToken: string) {
+  const hasher = crypto.createHash("sha256");
+  hasher.update(refreshToken);
+  return `wcl-token-${hasher.digest("hex")}`;
 }
 
 class WclStrategy extends OAuth2Strategy {
@@ -105,6 +151,10 @@ const wcl =
           } else {
             console.log(`Wcl login by ${profile.name} (${profile.id})`);
           }
+
+          await cache
+            .set(await refreshTokenKey(refreshToken), accessToken)
+            .catch(Sentry.captureException);
 
           const [user, created] = await User.findOrCreate({
             where: { wclId: profile.id },

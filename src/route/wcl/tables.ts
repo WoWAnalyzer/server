@@ -78,11 +78,13 @@ const tables = wrapEndpoint<TableQuery, ReportParams & { type: string }>(
         hostility: req.query.hostility,
         sourceclass: req.query.sourceclass,
       },
-      req.user?.data.wcl?.accessToken
+      {
+        refreshToken: req.user?.data.wcl?.refreshToken,
+      }
     );
     const { data } = rawData.reportData.report.table;
     return data;
-  },
+  }
 );
 
 export default tables;

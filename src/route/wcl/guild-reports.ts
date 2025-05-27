@@ -81,14 +81,16 @@ const guildReports = wrapEndpoint<{
         ...req.params,
         start: Number(req.query.start),
       },
-      req.user?.data.wcl?.accessToken,
+      {
+        refreshToken: req.user?.data.wcl?.refreshToken,
+      },
       req.query.game === "classic" ? GameType.Classic : GameType.Retail
     );
 
     return rawData.reportData.reports.data.map(mapReportData);
   },
   false,
-  12 * 60 * 60, // only cache reports for 12 hours
+  12 * 60 * 60 // only cache reports for 12 hours
 );
 
 export default guildReports;

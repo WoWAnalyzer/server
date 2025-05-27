@@ -68,11 +68,13 @@ const encounterRankings = wrapEndpoint<
         metric: req.query.metric,
         includeCombatantInfo: req.query.includeCombatantInfo !== "false",
       },
-      req.user?.data.wcl?.accessToken
+      {
+        refreshToken: req.user?.data.wcl?.refreshToken,
+      }
     );
 
     return rawData.worldData.encounter.characterRankings;
-  },
+  }
 );
 
 export default encounterRankings;

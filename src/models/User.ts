@@ -21,7 +21,6 @@ type PatreonData = {
   refreshToken: string;
 };
 type WclData = {
-  accessToken: string;
   refreshToken: string;
   expiresAt: number;
 };

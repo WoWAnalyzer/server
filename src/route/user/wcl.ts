@@ -147,7 +147,6 @@ export async function refreshWclProfile(user: User) {
       ...user.data,
       name: wclProfile.name,
       wcl: {
-        accessToken: tokenResponse.access_token,
         refreshToken: tokenResponse.refresh_token,
         expiresAt: Date.now() + tokenResponse.expires_in * 1000,
       },
@@ -215,7 +214,6 @@ const wcl =
               data: {
                 name: profile.name,
                 wcl: {
-                  accessToken: accessToken,
                   refreshToken: refreshToken,
                   expiresAt: Date.now() + params.expires_in * 1000,
                 },
@@ -229,7 +227,6 @@ const wcl =
                 ...user.data,
                 name: profile.name,
                 wcl: {
-                  accessToken,
                   refreshToken,
                   expiresAt: Date.now() + params.expires_in * 1000,
                 },

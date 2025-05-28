@@ -1,7 +1,6 @@
 import * as api from "../../wcl/api";
 import { gql } from "graphql-request";
 import User from "../../models/User";
-import { addSeconds } from "date-fns";
 import {
   Strategy as OAuth2Strategy,
   StrategyOptions,
@@ -12,16 +11,39 @@ import * as Sentry from "@sentry/node";
 import * as crypto from "node:crypto";
 import axios, { AxiosError } from "axios";
 
-export const userInfoQuery = gql`
+export const currentUserQuery = gql`
   query {
     userData {
       currentUser {
         id
+      }
+    }
+  }
+`;
+
+const userQuery = gql`
+  query getUser($id: Int!) {
+    userData {
+      user(id: $id) {
+        id
+        avatar
         name
       }
     }
   }
 `;
+
+type CurrentUserData = {
+  userData: {
+    currentUser: { id: number };
+  };
+};
+
+type UserData = {
+  userData: {
+    user: { id: number; avatar: string; name: string };
+  };
+};
 
 type WclTokenResponse = {
   access_token: string;
@@ -33,21 +55,34 @@ type WclRefreshTokenResponse = WclTokenResponse & {
   refresh_token: string;
 };
 
-type WclUserInfo = {
-  userData: {
-    currentUser: { id: number; name: string };
-  };
-};
-
 type WclProfile = {
   id: number;
   name: string;
+  avatar: string;
 };
 
-async function fetchRawWclProfile(accessToken: string): Promise<WclUserInfo> {
-  const response = await api.query<WclUserInfo, {}>(
-    userInfoQuery,
+async function fetchWclCurrentUserId(accessToken: string): Promise<number> {
+  const response = await api.query<CurrentUserData, {}>(
+    currentUserQuery,
     {},
+    {
+      accessToken,
+    }
+  );
+
+  return response.userData.currentUser.id;
+}
+
+async function fetchRawWclProfile(
+  accessToken: string,
+  id?: number | null
+): Promise<UserData> {
+  id = id ?? (await fetchWclCurrentUserId(accessToken));
+  const response = await api.query<UserData, {}>(
+    userQuery,
+    {
+      id,
+    },
     {
       accessToken,
     }
@@ -56,20 +91,22 @@ async function fetchRawWclProfile(accessToken: string): Promise<WclUserInfo> {
   return response;
 }
 
-function parseWclProfile(profile: WclUserInfo): WclProfile {
-  const id = profile.userData.currentUser.id;
-  const name = profile.userData.currentUser.name;
+function parseWclProfile(profile: UserData): WclProfile {
+  const id = profile.userData.user.id;
+  const name = profile.userData.user.name;
+  const avatar = profile.userData.user.avatar;
   return {
     id,
     name,
+    avatar,
   };
 }
 
 async function fetchWclProfile(
   accessToken: string,
-  refreshToken: string
+  id?: number | null
 ): Promise<WclProfile> {
-  const profile = await fetchRawWclProfile(accessToken);
+  const profile = await fetchRawWclProfile(accessToken, id);
   return parseWclProfile(profile);
 }
 
@@ -135,7 +172,7 @@ export async function refreshWclProfile(user: User) {
 
   const wclProfile = await fetchWclProfile(
     tokenResponse.access_token,
-    tokenResponse.refresh_token
+    user.wclId
   );
 
   await cache
@@ -149,6 +186,7 @@ export async function refreshWclProfile(user: User) {
     data: {
       ...user.data,
       name: wclProfile.name,
+      avatar: wclProfile.avatar,
       wcl: {
         refreshToken: tokenResponse.refresh_token,
         expiresAt: Date.now() + tokenResponse.expires_in * 1000,
@@ -173,7 +211,7 @@ class WclStrategy extends OAuth2Strategy {
     accessToken: string,
     done: (err?: Error | null, profile?: WclProfile) => void
   ): void {
-    fetchWclProfile(accessToken, "")
+    fetchWclProfile(accessToken)
       .then((profile) => done(null, profile))
       .catch((err) => done(err));
   }
@@ -216,6 +254,7 @@ const wcl =
               wclId: profile.id,
               data: {
                 name: profile.name,
+                avatar: profile.avatar,
                 wcl: {
                   refreshToken: refreshToken,
                   expiresAt: Date.now() + params.expires_in * 1000,
@@ -229,6 +268,7 @@ const wcl =
               data: {
                 ...user.data,
                 name: profile.name,
+                avatar: profile.avatar,
                 wcl: {
                   refreshToken,
                   expiresAt: Date.now() + params.expires_in * 1000,

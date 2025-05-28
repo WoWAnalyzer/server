@@ -1,7 +1,7 @@
 import { ClientError, request, Variables } from "graphql-request";
 import axios from "axios";
 import * as cache from "../cache.ts";
-import { userInfoQuery, userRefreshTokenKey } from "../route/user/wcl.ts";
+import { currentUserQuery, userRefreshTokenKey } from "../route/user/wcl.ts";
 
 async function fetchToken(): Promise<string | undefined> {
   const basicAuth = Buffer.from(
@@ -41,7 +41,7 @@ async function isValidUserToken(accessToken?: string) {
   try {
     const isValid = await request(
       `https://www.${process.env.WCL_PRIMARY_DOMAIN}/api/v2/user`,
-      userInfoQuery,
+      currentUserQuery,
       {},
       {
         Authorization: `Bearer ${token}`,

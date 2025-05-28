@@ -49,7 +49,7 @@ async function isValidUserToken(accessToken?: string) {
         "Accept-Encoding": "deflate,gzip",
       }
     );
-    return !!isValid;
+    return Boolean(isValid);
   } catch (error) {}
 }
 

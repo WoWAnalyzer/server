@@ -68,6 +68,8 @@ export enum ApiErrorType {
   NoSuchLog,
   Unknown,
   Unauthorized,
+  TokenRevoked,
+  TokenExpired,
 }
 
 export class ApiError extends Error {

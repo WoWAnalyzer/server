@@ -10,6 +10,7 @@ import * as cache from "../../cache.ts";
 import * as Sentry from "@sentry/node";
 import * as crypto from "node:crypto";
 import axios, { AxiosError } from "axios";
+import { ApiError, ApiErrorType } from "../../wcl/api";
 
 export const currentUserQuery = gql`
   query {
@@ -142,32 +143,45 @@ async function refreshToken(
       switch (error.response?.data.hint) {
         case "Token has been revoked":
         case "Authorization code has been revoked":
-          throw new Error("Token has been revoked");
+          throw new ApiError(error, ApiErrorType.TokenRevoked);
         case "Token has expired":
-          throw new Error("Token has expired");
+          throw new ApiError(error, ApiErrorType.TokenExpired);
       }
     }
-    throw new Error("Unknown error");
+    throw new ApiError(error as Error, ApiErrorType.Unknown);
   }
 }
 
-export async function refreshWclProfile(user: User) {
+/** Try to refresh the WCL profile & token for a user
+ * @returns true if the profile was refreshed, false or an error if something went wrong */
+export async function refreshWclProfile(
+  user: User
+): Promise<boolean | api.ApiError> {
   console.log(`Refreshing Wcl data for ${user.data.name} (${user.wclId})`);
   if (!user.data.wcl) {
-    return;
+    return false;
   }
 
   let tokenResponse;
   try {
     tokenResponse = await refreshToken(user.data.wcl.refreshToken);
   } catch (error) {
-    if (error instanceof Error) {
-      console.log("tokenResponse-error", error.message);
+    await cache.set(
+      await userRefreshTokenKey(user.data.wcl.refreshToken),
+      null
+    );
+    if (error instanceof ApiError) {
+      return error;
     }
+    return false;
   }
 
   if (!tokenResponse) {
-    return;
+    await cache.set(
+      await userRefreshTokenKey(user.data.wcl.refreshToken),
+      null
+    );
+    return false;
   }
 
   const wclProfile = await fetchWclProfile(
@@ -193,6 +207,8 @@ export async function refreshWclProfile(user: User) {
       },
     },
   });
+
+  return true;
 }
 
 export async function userRefreshTokenKey(refreshToken: string) {

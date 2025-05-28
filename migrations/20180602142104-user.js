@@ -15,10 +15,6 @@ module.exports = {
           type: DataTypes.INTEGER,
           allowNull: true,
         },
-        wclId: {
-          type: DataTypes.INTEGER,
-          allowNull: true,
-        },
         authKey: {
           type: DataTypes.CHAR(32),
           allowNull: false,
@@ -43,7 +39,6 @@ module.exports = {
         Promise.all([
           queryInterface.addIndex("User", ["gitHubId"]),
           queryInterface.addIndex("User", ["patreonId"]),
-          queryInterface.addIndex("User", ["wclId"]),
         ])
       );
   },

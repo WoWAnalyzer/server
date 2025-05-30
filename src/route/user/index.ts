@@ -53,7 +53,7 @@ const user: FastifyPluginCallback = (app, _, done) => {
     app.get("/login/patreon", passport.authenticate("patreon"));
     app.get(
       "/login/patreon/callback",
-      passport.authenticate("patreon", options)
+      passport.authenticate("patreon", options),
     );
   } else {
     console.warn("Unable to initialize Patreon auth. Patreon login disabled");
@@ -140,7 +140,7 @@ const user: FastifyPluginCallback = (app, _, done) => {
         premium: true,
         expires: addDays(
           github?.lastContribution ?? 0,
-          GITHUB_COMMIT_PREMIUM_DURATION_DAYS
+          GITHUB_COMMIT_PREMIUM_DURATION_DAYS,
         ),
       };
     }

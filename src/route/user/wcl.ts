@@ -11,6 +11,7 @@ import * as Sentry from "@sentry/node";
 import * as crypto from "node:crypto";
 import axios, { AxiosError } from "axios";
 import { ApiError, ApiErrorType } from "../../wcl/api";
+import { FastifyRequest } from "fastify";
 
 export const currentUserQuery = gql`
   query {
@@ -68,7 +69,7 @@ async function fetchWclCurrentUserId(accessToken: string): Promise<number> {
     {},
     {
       accessToken,
-    }
+    },
   );
 
   return response.userData.currentUser.id;
@@ -76,7 +77,7 @@ async function fetchWclCurrentUserId(accessToken: string): Promise<number> {
 
 async function fetchRawWclProfile(
   accessToken: string,
-  id?: number | null
+  id?: number | null,
 ): Promise<UserData> {
   id = id ?? (await fetchWclCurrentUserId(accessToken));
   const response = await api.query<UserData, {}>(
@@ -86,7 +87,7 @@ async function fetchRawWclProfile(
     },
     {
       accessToken,
-    }
+    },
   );
 
   return response;
@@ -105,17 +106,17 @@ function parseWclProfile(profile: UserData): WclProfile {
 
 async function fetchWclProfile(
   accessToken: string,
-  id?: number | null
+  id?: number | null,
 ): Promise<WclProfile> {
   const profile = await fetchRawWclProfile(accessToken, id);
   return parseWclProfile(profile);
 }
 
 async function refreshToken(
-  refreshToken: string
+  refreshToken: string,
 ): Promise<WclRefreshTokenResponse | undefined> {
   const basicAuth = Buffer.from(
-    `${process.env.WCL_CLIENT_ID}:${process.env.WCL_CLIENT_SECRET}`
+    `${process.env.WCL_CLIENT_ID}:${process.env.WCL_CLIENT_SECRET}`,
   ).toString("base64");
 
   try {
@@ -130,7 +131,7 @@ async function refreshToken(
           Accept: "application/json",
           Authorization: `Basic ${basicAuth}`,
         },
-      }
+      },
     );
 
     if (!response.data.refresh_token) {
@@ -155,7 +156,7 @@ async function refreshToken(
 /** Try to refresh the WCL profile & token for a user
  * @returns true if the profile was refreshed, false or an error if something went wrong */
 export async function refreshWclProfile(
-  user: User
+  user: User,
 ): Promise<boolean | api.ApiError> {
   console.log(`Refreshing Wcl data for ${user.data.name} (${user.wclId})`);
   if (!user.data.wcl) {
@@ -168,7 +169,7 @@ export async function refreshWclProfile(
   } catch (error) {
     await cache.set(
       await userRefreshTokenKey(user.data.wcl.refreshToken),
-      null
+      null,
     );
     if (error instanceof ApiError) {
       return error;
@@ -179,20 +180,20 @@ export async function refreshWclProfile(
   if (!tokenResponse) {
     await cache.set(
       await userRefreshTokenKey(user.data.wcl.refreshToken),
-      null
+      null,
     );
     return false;
   }
 
   const wclProfile = await fetchWclProfile(
     tokenResponse.access_token,
-    user.wclId
+    user.wclId,
   );
 
   await cache
     .set(
       await userRefreshTokenKey(tokenResponse.refresh_token),
-      tokenResponse.access_token
+      tokenResponse.access_token,
     )
     .catch(Sentry.captureException);
 
@@ -223,9 +224,17 @@ class WclStrategy extends OAuth2Strategy {
     this.name = "wcl";
   }
 
+  // this override has an awkward type because it is written for express and uses the express request type (just named `Request`)
+  authenticate(...[req, options]: Parameters<OAuth2Strategy["authenticate"]>) {
+    // this call forces the session data to be resent to the client, which prevents the client from getting stuck
+    // with an old value for `state` if you exit the flow early / abnormally
+    (req as unknown as FastifyRequest).session.touch();
+    super.authenticate(req, options);
+  }
+
   userProfile(
     accessToken: string,
-    done: (err?: Error | null, profile?: WclProfile) => void
+    done: (err?: Error | null, profile?: WclProfile) => void,
   ): void {
     fetchWclProfile(accessToken)
       .then((profile) => done(null, profile))
@@ -252,7 +261,7 @@ const wcl =
           refreshToken: string,
           params: WclTokenResponse,
           profile: WclProfile,
-          done: (err: null, user: User) => void
+          done: (err: null, user: User) => void,
         ) {
           if (process.env.NODE_ENV === "development") {
             console.log("Wcl login:", profile);
@@ -294,7 +303,7 @@ const wcl =
           }
 
           done(null, user);
-        }
+        },
       )
     : undefined;
 

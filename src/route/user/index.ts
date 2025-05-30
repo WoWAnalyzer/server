@@ -5,20 +5,13 @@ import githubStrategy, { refreshGitHubLastContribution } from "./github.ts";
 import patreonStrategy, { refreshPatreonProfile } from "./patreon.ts";
 import wclStrategy, { refreshWclProfile } from "./wcl.ts";
 import User from "../../models/User.ts";
-import WclUser from "../../models/WclUser.ts";
 import { addDays, differenceInDays } from "date-fns";
 import type { AnyStrategy } from "@fastify/passport/dist/strategies/index";
 import { ApiError } from "../../wcl/api.ts";
 
-type MergedUser = User & WclUser;
 declare module "fastify" {
-  interface PassportUser extends MergedUser {}
+  interface PassportUser extends User {}
 }
-
-type SerializedUser = {
-  id: number;
-  type: "user" | "wcl";
-};
 
 export const GITHUB_COMMIT_PREMIUM_DURATION_DAYS = 30;
 // Don't refresh the 3rd party status more often than this, improving performance of this API and reducing the number of API requests to the third parties.
@@ -45,16 +38,9 @@ const user: FastifyPluginCallback = (app, _, done) => {
     return;
   }
 
-  passport.registerUserSerializer(async (user: User | WclUser) =>
-    user instanceof WclUser
-      ? { id: user.id, type: "wcl" }
-      : { id: user.id, type: "user" }
-  );
-  passport.registerUserDeserializer(async (serializedUser: SerializedUser) => {
-    if (serializedUser.type === "user") {
-      return await User.findByPk(serializedUser.id);
-    }
-    return await WclUser.findByPk(serializedUser.id);
+  passport.registerUserSerializer(async (user: User) => user.id);
+  passport.registerUserDeserializer(async (id: number) => {
+    return await User.findByPk(id);
   });
 
   const options = {

@@ -1,6 +1,6 @@
 import * as api from "../../wcl/api";
 import { gql } from "graphql-request";
-import WclUser from "../../models/WclUser.ts";
+import User from "../../models/User";
 import {
   Strategy as OAuth2Strategy,
   StrategyOptions,
@@ -155,9 +155,9 @@ async function refreshToken(
 /** Try to refresh the WCL profile & token for a user
  * @returns true if the profile was refreshed, false or an error if something went wrong */
 export async function refreshWclProfile(
-  user: WclUser
+  user: User
 ): Promise<boolean | api.ApiError> {
-  console.log(`Refreshing Wcl data for ${user.data.name} (${user.id})`);
+  console.log(`Refreshing Wcl data for ${user.data.name} (${user.wclId})`);
   if (!user.data.wcl) {
     return false;
   }
@@ -184,7 +184,10 @@ export async function refreshWclProfile(
     return false;
   }
 
-  const wclProfile = await fetchWclProfile(tokenResponse.access_token, user.id);
+  const wclProfile = await fetchWclProfile(
+    tokenResponse.access_token,
+    user.wclId
+  );
 
   await cache
     .set(
@@ -249,7 +252,7 @@ const wcl =
           refreshToken: string,
           params: WclTokenResponse,
           profile: WclProfile,
-          done: (err: null, user: WclUser) => void
+          done: (err: null, user: User) => void
         ) {
           if (process.env.NODE_ENV === "development") {
             console.log("Wcl login:", profile);
@@ -261,15 +264,15 @@ const wcl =
             .set(await userRefreshTokenKey(refreshToken), accessToken)
             .catch(Sentry.captureException);
 
-          const [user, created] = await WclUser.findOrCreate({
-            where: { id: profile.id },
+          const [user, created] = await User.findOrCreate({
+            where: { wclId: profile.id },
             defaults: {
-              id: profile.id,
+              wclId: profile.id,
               data: {
                 name: profile.name,
                 avatar: profile.avatar,
                 wcl: {
-                  refreshToken,
+                  refreshToken: refreshToken,
                   expiresAt: Date.now() + params.expires_in * 1000,
                 },
               },

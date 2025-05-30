@@ -68,7 +68,7 @@ export function wrapEndpoint<
       const cacheKey = `${keyPrefix}-${await queryKey(
         req.params as ReportParams & P
       )}-${await queryKey(req.query as Q)}${
-        req.user?.data.wcl ? `-${req.user.id}` : ""
+        req.user?.wclId ? `-${req.user.wclId}` : ""
       }`;
 
       try {

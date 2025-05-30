@@ -63,7 +63,7 @@ export interface WCLReport {
   logVersion: number;
   gameVersion: number;
   title: string;
-  owner: string;
+  owner?: string;
   start: number;
   end: number;
   zone: number;

@@ -124,7 +124,7 @@ interface FightData {
     report: {
       reportArchiveStatus: string;
       title: string;
-      owner: { id: number; name: string };
+      owner?: { id: number; name: string };
       start: number;
       end: number;
 
@@ -264,7 +264,7 @@ function reportDataCompat({ reportData: { report } }: FightData): WCLReport {
           .map(({ id }) => id),
         separatesWipes,
       })) ?? [],
-    owner: report.owner.name,
+    owner: report.owner?.name,
     lang: report.masterData.lang,
     logVersion: report.masterData.logVersion,
     gameVersion: report.masterData.gameVersion,

@@ -124,7 +124,7 @@ interface FightData {
     report: {
       reportArchiveStatus: string;
       title: string;
-      owner: { id: number; name: string };
+      owner?: { id: number; name: string };
       start: number;
       end: number;
 
@@ -190,7 +190,7 @@ type ActorInput<T extends ActorKind> = Required<
 >[T][number];
 type ActorAppender<T extends ActorKind> = (
   v: ActorInput<T>,
-  actor: ActorType[T],
+  actor: ActorType[T]
 ) => void;
 
 const mapEnemy: ActorAppender<"enemyNPCs" | "enemyPets"> = (input, actor) => {
@@ -211,7 +211,7 @@ const mapPet: ActorAppender<"friendlyPets"> = (input, actor) => {
 function withFights<T extends ActorKind>(
   report: FightData["reportData"]["report"],
   kind: T,
-  appender: ActorAppender<T>,
+  appender: ActorAppender<T>
 ): Array<ActorType[T]> {
   const result: Map<number, ActorType[typeof kind]> = report.masterData.actors
     .map((actor) => ({
@@ -253,7 +253,7 @@ function reportDataCompat({ reportData: { report } }: FightData): WCLReport {
         }
 
         return fight;
-      },
+      }
     ),
     phases:
       report.phases?.map(({ boss, phases, separatesWipes }) => ({
@@ -264,7 +264,7 @@ function reportDataCompat({ reportData: { report } }: FightData): WCLReport {
           .map(({ id }) => id),
         separatesWipes,
       })) ?? [],
-    owner: report.owner.name,
+    owner: report.owner?.name,
     lang: report.masterData.lang,
     logVersion: report.masterData.logVersion,
     gameVersion: report.masterData.gameVersion,
@@ -286,7 +286,7 @@ function reportDataCompat({ reportData: { report } }: FightData): WCLReport {
         ...rest,
         server: server.slug,
         region: server.region.slug,
-      }),
+      })
     ),
   };
 }
@@ -302,7 +302,7 @@ const fights = wrapEndpoint(
       translate: req.query.translate !== "false",
     });
     return reportDataCompat(rawData);
-  },
+  }
 );
 
 export default fights;

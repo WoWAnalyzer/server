@@ -297,10 +297,16 @@ const fights = wrapEndpoint(
     const rawData = await api.query<
       FightData,
       { code: string; translate: boolean }
-    >(fightQuery, {
-      code: req.params.code,
-      translate: req.query.translate !== "false",
-    });
+    >(
+      fightQuery,
+      {
+        code: req.params.code,
+        translate: req.query.translate !== "false",
+      },
+      {
+        refreshToken: req.user?.data.wcl?.refreshToken,
+      }
+    );
     return reportDataCompat(rawData);
   }
 );

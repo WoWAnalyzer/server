@@ -66,8 +66,10 @@ export function wrapEndpoint<
   return (app: FastifyInstance) =>
     app.get<WclProxy<Q, P>>(url, async (req, reply) => {
       const cacheKey = `${keyPrefix}-${await queryKey(
-        req.params as ReportParams & P,
-      )}-${await queryKey(req.query as Q)}`;
+        req.params as ReportParams & P
+      )}-${await queryKey(req.query as Q)}${
+        req.user?.wclId ? `-${req.user.wclId}` : ""
+      }`;
 
       try {
         if (shouldSkipCache(req)) {
@@ -96,13 +98,17 @@ export function wrapEndpoint<
           }
         }
       } catch (error) {
-        if (
-          error instanceof ApiError &&
-          error.type === ApiErrorType.NoSuchLog
-        ) {
-          return reply.code(404).send({
-            message: "No log found with that code.",
-          });
+        if (error instanceof ApiError) {
+          switch (error.type) {
+            case ApiErrorType.NoSuchLog:
+              return reply.code(404).send({
+                message: "No log found with that code.",
+              });
+            case ApiErrorType.Unauthorized:
+              return reply.code(401).send({
+                message: "Unauthorized",
+              });
+          }
         }
         console.error(error);
         // TODO handle error

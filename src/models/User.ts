@@ -20,18 +20,24 @@ type PatreonData = {
   accessToken: string;
   refreshToken: string;
 };
+type WclData = {
+  refreshToken: string;
+  expiresAt: number;
+};
 
 interface Data {
   name: string;
   avatar?: string;
   github?: GitHubData;
   patreon?: PatreonData;
+  wcl?: WclData;
 }
 
 class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
   declare id: CreationOptional<number>;
   declare gitHubId: number | null;
   declare patreonId: number | null;
+  declare wclId: number | null;
   declare data: Data;
   declare createdAt: CreationOptional<Date>;
   declare lastSeenAt: CreationOptional<Date>;
@@ -49,6 +55,10 @@ User.init(
       allowNull: true,
     },
     patreonId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    wclId: {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
@@ -73,7 +83,7 @@ User.init(
       allowNull: false,
     },
   },
-  { sequelize: db },
+  { sequelize: db }
 );
 
 export default User;

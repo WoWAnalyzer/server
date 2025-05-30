@@ -1,9 +1,11 @@
 import { ClientError, request, Variables } from "graphql-request";
 import axios from "axios";
+import * as cache from "../cache.ts";
+import { currentUserQuery, userRefreshTokenKey } from "../route/user/wcl.ts";
 
 async function fetchToken(): Promise<string | undefined> {
   const basicAuth = Buffer.from(
-    `${process.env.WCL_CLIENT_ID}:${process.env.WCL_CLIENT_SECRET}`,
+    `${process.env.WCL_CLIENT_ID}:${process.env.WCL_CLIENT_SECRET}`
   ).toString("base64");
   const response = await axios.postForm(
     `https://www.${process.env.WCL_PRIMARY_DOMAIN}/oauth/token`,
@@ -15,10 +17,40 @@ async function fetchToken(): Promise<string | undefined> {
         Accept: "application/json",
         Authorization: `Basic ${basicAuth}`,
       },
-    },
+    }
   );
 
   return response.data?.access_token;
+}
+
+async function getUserToken(userToken: {
+  refreshToken?: string;
+  accessToken?: string;
+}): Promise<string | undefined> {
+  if (userToken.accessToken) return userToken.accessToken;
+  if (!userToken.refreshToken) return undefined;
+
+  const accessToken = await cache.get<string>(
+    await userRefreshTokenKey(userToken.refreshToken)
+  );
+  return accessToken;
+}
+
+async function isValidUserToken(accessToken?: string) {
+  if (!accessToken) return;
+  try {
+    const isValid = await request(
+      `https://www.${process.env.WCL_PRIMARY_DOMAIN}/api/v2/user`,
+      currentUserQuery,
+      {},
+      {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "Accept-Encoding": "deflate,gzip",
+      }
+    );
+    return Boolean(isValid);
+  } catch (error) {}
 }
 
 // TODO: refresh token
@@ -35,6 +67,9 @@ export enum ApiErrorType {
   /** The log is private or does not exist. */
   NoSuchLog,
   Unknown,
+  Unauthorized,
+  TokenRevoked,
+  TokenExpired,
 }
 
 export class ApiError extends Error {
@@ -63,21 +98,28 @@ function subdomain(gameType: GameType): string {
 export async function query<T, V extends Variables>(
   gql: string,
   variables: V,
-  gameType: GameType = GameType.Retail,
+  userToken?: {
+    refreshToken?: string;
+    accessToken?: string;
+  },
+  gameType: GameType = GameType.Retail
 ): Promise<T> {
-  let token = await getToken();
+  const hasUserToken =
+    userToken?.accessToken !== undefined ||
+    userToken?.refreshToken !== undefined;
+  let token = hasUserToken ? await getUserToken(userToken) : await getToken();
   const run = () =>
     request<T>(
       `https://${subdomain(gameType)}.${
         process.env.WCL_PRIMARY_DOMAIN
-      }/api/v2/client`,
+      }/api/v2/${hasUserToken ? "user" : "client"}`,
       gql,
       variables,
       {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
         "Accept-Encoding": "deflate,gzip",
-      },
+      }
     );
   let data;
   try {
@@ -87,16 +129,23 @@ export async function query<T, V extends Variables>(
       if (isPrivateLogError(error)) {
         throw new ApiError(error, ApiErrorType.NoSuchLog);
       }
+
+      if (hasUserToken && !(await isValidUserToken(token))) {
+        throw new ApiError(error, ApiErrorType.Unauthorized);
+      }
     }
 
     // blindly attempt to reauthenticate and try again
-    token = await getToken(true);
+    token = hasUserToken ? await getUserToken(userToken) : await getToken(true);
     try {
       data = await run();
     } catch (error) {
       if (error instanceof ClientError) {
         if (isPrivateLogError(error)) {
           throw new ApiError(error, ApiErrorType.NoSuchLog);
+        }
+        if (hasUserToken && !(await isValidUserToken(token))) {
+          throw new ApiError(error, ApiErrorType.Unauthorized);
         }
 
         // we only use Unknown here after attempting to re-auth to make sure that the re-auth happens

@@ -4,6 +4,7 @@ import { FastifyInstance, FastifyRequest } from "fastify";
 import * as cache from "../../cache.ts";
 import * as Sentry from "@sentry/node";
 import { ApiError, ApiErrorType } from "../../wcl/api.ts";
+import { setCacheControlHeader } from "../../common/cache-control.ts";
 
 export type WclProxy<T, P = ReportParams> = { Params: P; Querystring: T };
 export type ReportParams = { code: string };
@@ -65,15 +66,19 @@ export function wrapEndpoint<
 ) {
   return (app: FastifyInstance) =>
     app.get<WclProxy<Q, P>>(url, async (req, reply) => {
+      const hasWclUser = Boolean(req.user?.wclId);
       const cacheKey = `${keyPrefix}-${await queryKey(
-        req.params as ReportParams & P,
-      )}-${await queryKey(req.query as Q)}`;
+        req.params as ReportParams & P
+      )}-${await queryKey(req.query as Q)}${
+        hasWclUser ? `-${req.user!.wclId}` : ""
+      }`;
 
       try {
         if (shouldSkipCache(req)) {
           const data = await thunk(req);
           if (data) {
             cache.set(cacheKey, data, timeout).catch(Sentry.captureException);
+            setCacheControlHeader(reply, undefined, hasWclUser);
             return reply.send(
               compressed ? await decompress(data as string) : data,
             );
@@ -88,6 +93,7 @@ export function wrapEndpoint<
           );
 
           if (data) {
+            setCacheControlHeader(reply, undefined, hasWclUser);
             return reply.send(
               compressed ? await decompress(data as string) : data,
             );
@@ -96,13 +102,17 @@ export function wrapEndpoint<
           }
         }
       } catch (error) {
-        if (
-          error instanceof ApiError &&
-          error.type === ApiErrorType.NoSuchLog
-        ) {
-          return reply.code(404).send({
-            message: "No log found with that code.",
-          });
+        if (error instanceof ApiError) {
+          switch (error.type) {
+            case ApiErrorType.NoSuchLog:
+              return reply.code(404).send({
+                message: "No log found with that code.",
+              });
+            case ApiErrorType.Unauthorized:
+              return reply.code(401).send({
+                message: "Unauthorized",
+              });
+          }
         }
         console.error(error);
         // TODO handle error

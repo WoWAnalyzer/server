@@ -68,8 +68,26 @@ const user: FastifyPluginCallback = (app, _, done) => {
   if (wclStrategy) {
     passport.use(wclStrategy);
     // TODO: This should redirect to separate WCL login page
-    app.get("/login/wcl", passport.authenticate("wcl"));
-    app.get("/login/wcl/callback", passport.authenticate("wcl", options));
+    app.get("/login/wcl", (req, res) => {
+      req.session.set("returnTo", req.query.redirect);
+      passport.authenticate("wcl")(req, res);
+    });
+    app.get("/login/wcl/callback", (req, reply) => {
+      passport.authenticate("wcl", async (_Request, _Reply, err, User) => {
+        if (err || !User) {
+          return reply.redirect(options.failureRedirect);
+        }
+
+        // Get return url before logging in the user or it will be lost
+        const returnToUrl = req.session.get("returnTo")
+          ? `http://localhost:3000${req.session.get("returnTo")}`
+          : options.successRedirect;
+
+        await req.logIn(User);
+
+        return reply.redirect(returnToUrl);
+      })(req, reply);
+    });
   } else {
     console.warn("Unable to initialize Wcl auth. Wcl login disabled");
   }

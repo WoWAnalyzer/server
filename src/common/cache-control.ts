@@ -9,7 +9,8 @@ export const cacheControl = fp<{ cacheDuration?: number }>(
       if (reply.statusCode >= 299) {
         // do not cache errors or redirects
         reply.header("cache-control", "no-cache");
-      } else {
+      } else if (!Boolean(reply.getHeader("cache-control"))) {
+        // do not override existing cache control headers
         setCacheControlHeader(reply, options.cacheDuration);
       }
       return payload;

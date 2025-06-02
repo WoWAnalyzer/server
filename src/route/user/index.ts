@@ -12,6 +12,11 @@ import { ApiError } from "../../wcl/api.ts";
 declare module "fastify" {
   interface PassportUser extends User {}
 }
+declare module "@fastify/secure-session" {
+  interface SessionData {
+    returnTo: string;
+  }
+}
 
 export const GITHUB_COMMIT_PREMIUM_DURATION_DAYS = 30;
 // Don't refresh the 3rd party status more often than this, improving performance of this API and reducing the number of API requests to the third parties.
@@ -68,25 +73,30 @@ const user: FastifyPluginCallback = (app, _, done) => {
   if (wclStrategy) {
     passport.use(wclStrategy);
     // TODO: This should redirect to separate WCL login page
-    app.get("/login/wcl", (req, res) => {
-      req.session.set("returnTo", req.query.redirect);
-      passport.authenticate("wcl")(req, res);
-    });
-    app.get("/login/wcl/callback", (req, reply) => {
-      passport.authenticate("wcl", async (_Request, _Reply, err, User) => {
-        if (err || !User) {
-          return reply.redirect(options.failureRedirect);
-        }
+    app.get<{ Querystring: { redirect?: string } }>(
+      "/login/wcl",
+      function (req, res) {
+        req.session.set("returnTo", req.query.redirect);
+        passport.authenticate("wcl").call(this, req, res);
+      }
+    );
+    app.get("/login/wcl/callback", function (req, reply) {
+      passport
+        .authenticate("wcl", async (_Request, _Reply, err, User) => {
+          if (err || !User) {
+            return reply.redirect(options.failureRedirect);
+          }
 
-        // Get return url before logging in the user or it will be lost
-        const returnToUrl = req.session.get("returnTo")
-          ? `http://localhost:3000${req.session.get("returnTo")}`
-          : options.successRedirect;
+          // Get return url before logging in the user or it will be lost
+          const returnToUrl = req.session.get("returnTo")
+            ? `http://localhost:3000${req.session.get("returnTo")}`
+            : options.successRedirect;
 
-        await req.logIn(User);
+          await req.logIn(User);
 
-        return reply.redirect(returnToUrl);
-      })(req, reply);
+          return reply.redirect(returnToUrl);
+        })
+        .call(this, req, reply);
     });
   } else {
     console.warn("Unable to initialize Wcl auth. Wcl login disabled");

@@ -76,7 +76,12 @@ const user: FastifyPluginCallback = (app, _, done) => {
     app.get<{ Querystring: { redirect?: string } }>(
       "/login/wcl",
       function (req, res) {
-        req.session.set("returnTo", req.query.redirect);
+        const returnToUrl =
+          req.query.redirect &&
+          (req.query.redirect.startsWith("/")
+            ? req.query.redirect
+            : `/${req.query.redirect}`);
+        req.session.set("returnTo", returnToUrl);
         passport.authenticate("wcl").call(this, req, res);
       }
     );
@@ -88,9 +93,8 @@ const user: FastifyPluginCallback = (app, _, done) => {
           }
 
           // Get return url before logging in the user or it will be lost
-          const returnToUrl = req.session.get("returnTo")
-            ? `http://localhost:3000${req.session.get("returnTo")}`
-            : options.successRedirect;
+          const returnToUrl =
+            req.session.get("returnTo") ?? options.successRedirect;
 
           await req.logIn(User);
 

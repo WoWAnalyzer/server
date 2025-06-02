@@ -1,3 +1,4 @@
+import { FastifyReply } from "fastify";
 import fp from "fastify-plugin";
 
 export const CACHE_ONE_WEEK = 604800;
@@ -9,12 +10,29 @@ export const cacheControl = fp<{ cacheDuration?: number }>(
         // do not cache errors or redirects
         reply.header("cache-control", "no-cache");
       } else {
-        reply.header(
-          "cache-control",
-          `max-age=${options.cacheDuration ?? CACHE_ONE_WEEK}`,
-        );
+        setCacheControlHeader(reply, options.cacheDuration);
       }
       return payload;
     });
   },
 );
+
+const getCacheControlHeader = (
+  cacheDuration?: number,
+  privateCache?: boolean
+) => {
+  return `max-age=${cacheDuration ?? CACHE_ONE_WEEK}${
+    privateCache ? ", private" : ""
+  }`;
+};
+
+export const setCacheControlHeader = (
+  reply: FastifyReply,
+  cacheDuration?: number,
+  privateCache?: boolean
+) => {
+  reply.header(
+    "cache-control",
+    getCacheControlHeader(cacheDuration, privateCache)
+  );
+};

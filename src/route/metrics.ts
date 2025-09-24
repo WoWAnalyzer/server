@@ -29,7 +29,7 @@ const serverMetrics: FastifyPluginAsync = async (app) => {
       async () => {
         const data = await db.query(
           `
-      select configName, metricId, min(metricValue) as minValue, median(metricValue) over (partition by configName, metricId) as medValue, avg(metricValue) as avgValue, max(metricValue) as \`maxValue\`
+      select configName, metricId, min(metricValue) as minValue, avg(metricValue) as avgValue, max(metricValue) as \`maxValue\`
     from spec_analysis_metric_key as k
     join spec_analysis_metric_data data on data.keyId = k.id
     where k.analysisTimestamp >= now() - interval 2 week
@@ -42,7 +42,7 @@ const serverMetrics: FastifyPluginAsync = async (app) => {
           metricId: METRIC_NAMES_BY_ID[v.metricId as number],
         }));
       },
-      60,
+      600,
     );
 
     return reply.header("content-type", "application/json").send(data);

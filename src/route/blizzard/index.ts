@@ -107,6 +107,7 @@ async function fetchCharacter(
           code: activeTree.talent_loadout_code,
           nodes: activeTree.selected_class_talents
             .concat(activeTree.selected_spec_talents)
+            .filter(Boolean) // sometimes the blizzard api does terrible, terrible things
             .map(({ id, rank }) => ({ id, rank })),
         }
       : undefined,

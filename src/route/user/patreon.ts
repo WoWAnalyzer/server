@@ -13,6 +13,7 @@ type PatreonProfile = {
   included?: Array<{
     type: string;
     attributes: Record<string, unknown>;
+    relationships?: Record<string, unknown>;
   }>;
 };
 
@@ -21,7 +22,7 @@ export async function fetchRawPatreonProfile(
 ): Promise<PatreonProfile> {
   // return require('./__fixtures__/patreon-active.json');
   const response = await axios.get(
-    "https://api.patreon.com/oauth2/v2/identity?include=memberships&fields%5Buser%5D=full_name,image_url&fields%5Bmember%5D=patron_status,currently_entitled_amount_cents",
+    "https://api.patreon.com/oauth2/v2/identity?include=memberships,memberships.currently_entitled_tiers&fields%5Buser%5D=full_name,image_url&fields%5Bmember%5D=patron_status,currently_entitled_amount_cents&fields%5Btier%5D=amount_cents",
     {
       headers: {
         "User-Agent": "WoWAnalyzer.com API",
@@ -33,16 +34,51 @@ export async function fetchRawPatreonProfile(
   return response.data;
 }
 
+interface PatreonTierEntitlement {
+  data: { id: string }[];
+}
+
+interface PatreonTier {
+  type: "tier";
+  id: string;
+  attributes: {
+    amount_cents: number;
+  };
+}
+
 export function parseProfile(profile: PatreonProfile) {
   const id = profile.data.id;
   const name = profile.data.attributes.full_name;
   const avatar = profile.data.attributes.image_url;
   const member =
     profile.included && profile.included.find((item) => item.type === "member");
-  const pledgeAmount: number | null =
-    member && member.attributes.patron_status === "active_patron"
-      ? (member.attributes.currently_entitled_amount_cents as number)
-      : null;
+  let pledgeAmount: number | null = null;
+
+  if (member && member.attributes.patron_status === "active_patron") {
+    const tiers = member?.relationships?.currently_entitled_tiers as
+      | PatreonTierEntitlement
+      | undefined;
+    if (tiers && tiers.data.length > 0) {
+      for (const tier of tiers.data) {
+        const def = profile.included?.find(
+          (t): t is PatreonTier =>
+            t.type === "tier" && (t as PatreonTier).id === tier.id,
+        );
+        if (def) {
+          pledgeAmount = Math.max(
+            def.attributes.amount_cents,
+            pledgeAmount ?? 0,
+          );
+        }
+      }
+    }
+
+    const directEntitleAmount = member.attributes
+      .currently_entitled_amount_cents as number;
+    if (pledgeAmount === null || directEntitleAmount > pledgeAmount) {
+      pledgeAmount = directEntitleAmount;
+    }
+  }
 
   return {
     id,
@@ -110,7 +146,7 @@ const patreon =
             console.log("Patreon login:", patreonProfile);
           } else {
             console.log(
-              `Patreon login by ${patreonProfile.name} (${patreonProfile.id})`,
+              `Patreon login by ${patreonProfile.name} (${patreonProfile.id} @ ${patreonProfile.pledgeAmount}c)`,
             );
           }
 

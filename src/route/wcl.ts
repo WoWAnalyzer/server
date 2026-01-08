@@ -7,9 +7,11 @@ import parses from "./wcl/character-parses";
 import encounterRankings from "./wcl/encounter-rankings";
 import { cacheControl } from "../common/cache-control";
 import guildReports from "./wcl/guild-reports";
+import fightPlayers from "./wcl/fight-players";
 
 const wcl: FastifyPluginAsync = async (app) => {
   app.register(cacheControl);
+  fightPlayers(app);
   fights(app);
   events(app);
   eventsByType(app);

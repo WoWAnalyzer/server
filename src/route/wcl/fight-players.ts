@@ -26,8 +26,8 @@ type PlayerDetailsPlayer = {
   server: string;
   region: string;
   icon: string;
-  minItemLevel: number;
-  maxItemLevel: number;
+  minItemLevel?: number;
+  maxItemLevel?: number;
   specs: Array<{ spec: string; count: number }>;
   combatantInfo?: {
     specIDs: number[];
@@ -39,7 +39,7 @@ type PlayerDetails = {
   name: string;
   server: string;
   region: string;
-  ilvl: number;
+  ilvl?: number;
   className: string;
   specName?: string;
   specID?: number;

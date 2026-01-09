@@ -60,7 +60,7 @@ function extractPlayerDetails(
     ilvl: player.minItemLevel,
     className: player.type,
     specName: player.specs[0]?.spec,
-    specID: player.combatantInfo?.specIDs[0],
+    specID: player.combatantInfo?.specIDs?.[0],
     role: (role === "dps" ? "dps" : role.slice(0, -1)) as PlayerDetails["role"],
     guid: player.guid,
   };

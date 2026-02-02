@@ -36,7 +36,7 @@
     "@types/node": "^20.12.7",
     "@types/passport-github": "^1.1.11",
     "@types/passport-oauth2": "^1.4.17",
-    "eslint": "^8.52.0",
+    "eslint": "^9.26.0",
     "prettier": "^3.0.3",
     "sequelize-cli": "^6.6.1",
     "tsx": "^3.14.0",

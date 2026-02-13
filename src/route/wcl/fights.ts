@@ -190,20 +190,25 @@ type ActorInput<T extends ActorKind> = Required<
 >[T][number];
 type ActorAppender<T extends ActorKind> = (
   v: ActorInput<T>,
-  actor: ActorType[T]
+  actor: ActorType[T],
+  fight: WCLFight,
 ) => void;
 
-const mapEnemy: ActorAppender<"enemyNPCs" | "enemyPets"> = (input, actor) => {
+const mapEnemy: ActorAppender<"enemyNPCs" | "enemyPets"> = (
+  input,
+  actor,
+  fight,
+) => {
   actor.fights.push({
-    id: input.id,
+    id: fight.id,
     instances: input.instanceCount,
     groups: input.groupCount,
   });
 };
 
-const mapPet: ActorAppender<"friendlyPets"> = (input, actor) => {
+const mapPet: ActorAppender<"friendlyPets"> = (input, actor, fight) => {
   actor.fights.push({
-    id: input.id,
+    id: fight.id,
     instances: input.instanceCount,
   });
 };
@@ -211,7 +216,7 @@ const mapPet: ActorAppender<"friendlyPets"> = (input, actor) => {
 function withFights<T extends ActorKind>(
   report: FightData["reportData"]["report"],
   kind: T,
-  appender: ActorAppender<T>
+  appender: ActorAppender<T>,
 ): Array<ActorType[T]> {
   const result: Map<number, ActorType[typeof kind]> = report.masterData.actors
     .map((actor) => ({
@@ -232,7 +237,7 @@ function withFights<T extends ActorKind>(
       if (!actor) {
         return;
       }
-      appender(entry, actor);
+      appender(entry, actor, fight);
     });
   }
 
@@ -253,7 +258,7 @@ function reportDataCompat({ reportData: { report } }: FightData): WCLReport {
         }
 
         return fight;
-      }
+      },
     ),
     phases:
       report.phases?.map(({ boss, phases, separatesWipes }) => ({
@@ -286,7 +291,7 @@ function reportDataCompat({ reportData: { report } }: FightData): WCLReport {
         ...rest,
         server: server.slug,
         region: server.region.slug,
-      })
+      }),
     ),
   };
 }
@@ -305,10 +310,10 @@ const fights = wrapEndpoint(
       },
       {
         refreshToken: req.user?.data.wcl?.refreshToken,
-      }
+      },
     );
     return reportDataCompat(rawData);
-  }
+  },
 );
 
 export default fights;

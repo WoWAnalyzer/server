@@ -2,7 +2,7 @@ import { FastifyInstance } from "fastify";
 import axios from "axios";
 import * as cache from "../../cache";
 import * as Sentry from "@sentry/node";
-import { shouldSkipCache } from "./common";
+import { queryKey, shouldSkipCache } from "./common";
 
 // FIXME we cheat on the character parses due to significant changes to the
 // response from WCL. specifically: it is not currently possible to get all
@@ -49,7 +49,9 @@ const characterParses = (app: FastifyInstance) => {
       )?.data;
     };
     let data;
-    const cacheKey = `character-parses-${req.params.region}-${req.params.server}-${req.params.name}`;
+    const cacheKey = `character-parses-${await queryKey(
+      req.params,
+    )}-${await queryKey(req.query)}`;
     if (!shouldSkipCache(req)) {
       data = await cache.remember(cacheKey, thunk);
     } else {

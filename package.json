@@ -5,8 +5,8 @@
   "license": "AGPL-3.0-or-later",
   "main": "src/index.js",
   "scripts": {
-    "start": "NODE_ENV=development tsx src/index.ts",
-    "production": "NODE_ENV=production tsx src/index.ts",
+    "start": "cross-env NODE_ENV=development tsx src/index.ts",
+    "production": "cross-env NODE_ENV=production tsx src/index.ts",
     "serve": "tsx src/index.ts",
     "migrate": "tsx scripts/migrate.ts",
     "migrate:undo": "tsx scripts/migrate.ts --down"
@@ -16,7 +16,7 @@
     "@fastify/passport": "^2.4.0",
     "@fastify/reply-from": "^9.7.0",
     "@fastify/secure-session": "^7.5.1",
-    "@sentry/node": "^7.76.0",
+    "@sentry/node": "^10.49.0",
     "axios": "1.6.0",
     "date-fns": "^2.30.0",
     "dotenv": "^16.3.1",
@@ -36,6 +36,7 @@
     "@types/node": "^20.12.7",
     "@types/passport-github": "^1.1.11",
     "@types/passport-oauth2": "^1.4.17",
+    "cross-env": "^10.1.0",
     "eslint": "^8.52.0",
     "prettier": "^3.0.3",
     "sequelize-cli": "^6.6.1",

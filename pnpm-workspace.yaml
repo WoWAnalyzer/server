@@ -1,0 +1,8 @@
+allowBuilds:
+  es5-ext: true
+  esbuild: true
+  sodium-native: true
+onlyBuiltDependencies:
+  - es5-ext
+  - esbuild
+  - sodium-native

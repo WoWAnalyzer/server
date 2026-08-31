@@ -103,6 +103,10 @@ const fightQuery = gql`
             id
             startTime
           }
+
+          countReached
+          countRequired
+          npcCountMap
         }
 
         phases {

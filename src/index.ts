@@ -20,7 +20,18 @@ import wcl from "./route/wcl";
 import serverMetrics from "./route/metrics.ts";
 
 const app = Fastify({
-  logger: true,
+  logger: {
+    serializers: {
+      req(request) {
+        return {
+          method: request.method,
+          url: request.url,
+          forwardedFor: request.headers["x-forwarded-for"],
+          hostname: request.hostname,
+        };
+      },
+    },
+  },
 });
 
 Sentry.setupFastifyErrorHandler(app);

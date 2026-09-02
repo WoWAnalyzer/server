@@ -5,7 +5,7 @@ import { currentUserQuery, userRefreshTokenKey } from "../route/user/wcl.ts";
 
 async function fetchToken(): Promise<string | undefined> {
   const basicAuth = Buffer.from(
-    `${process.env.WCL_CLIENT_ID}:${process.env.WCL_CLIENT_SECRET}`
+    `${process.env.WCL_CLIENT_ID}:${process.env.WCL_CLIENT_SECRET}`,
   ).toString("base64");
   const response = await axios.postForm(
     `https://www.${process.env.WCL_PRIMARY_DOMAIN}/oauth/token`,
@@ -17,7 +17,7 @@ async function fetchToken(): Promise<string | undefined> {
         Accept: "application/json",
         Authorization: `Basic ${basicAuth}`,
       },
-    }
+    },
   );
 
   return response.data?.access_token;
@@ -31,7 +31,7 @@ async function getUserToken(userToken: {
   if (!userToken.refreshToken) return undefined;
 
   const accessToken = await cache.get<string>(
-    await userRefreshTokenKey(userToken.refreshToken)
+    await userRefreshTokenKey(userToken.refreshToken),
   );
   return accessToken;
 }
@@ -47,7 +47,7 @@ async function isValidUserToken(accessToken?: string) {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
         "Accept-Encoding": "deflate,gzip",
-      }
+      },
     );
     return Boolean(isValid);
   } catch (error) {}
@@ -102,7 +102,7 @@ export async function query<T, V extends Variables>(
     refreshToken?: string;
     accessToken?: string;
   },
-  gameType: GameType = GameType.Retail
+  gameType: GameType = GameType.Retail,
 ): Promise<T> {
   const hasUserToken =
     userToken?.accessToken !== undefined ||
@@ -119,7 +119,7 @@ export async function query<T, V extends Variables>(
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
         "Accept-Encoding": "deflate,gzip",
-      }
+      },
     );
   let data;
   try {
@@ -135,25 +135,27 @@ export async function query<T, V extends Variables>(
       }
     }
 
+    throw error;
+
     // blindly attempt to reauthenticate and try again
-    token = hasUserToken ? await getUserToken(userToken) : await getToken(true);
-    try {
-      data = await run();
-    } catch (error) {
-      if (error instanceof ClientError) {
-        if (isPrivateLogError(error)) {
-          throw new ApiError(error, ApiErrorType.NoSuchLog);
-        }
-        if (hasUserToken && !(await isValidUserToken(token))) {
-          throw new ApiError(error, ApiErrorType.Unauthorized);
-        }
+    // token = hasUserToken ? await getUserToken(userToken) : await getToken(true);
+    // try {
+    //   data = await run();
+    // } catch (error) {
+    //   if (error instanceof ClientError) {
+    //     if (isPrivateLogError(error)) {
+    //       throw new ApiError(error, ApiErrorType.NoSuchLog);
+    //     }
+    //     if (hasUserToken && !(await isValidUserToken(token))) {
+    //       throw new ApiError(error, ApiErrorType.Unauthorized);
+    //     }
 
-        // we only use Unknown here after attempting to re-auth to make sure that the re-auth happens
-        throw new ApiError(error, ApiErrorType.Unknown);
-      }
+    //     // we only use Unknown here after attempting to re-auth to make sure that the re-auth happens
+    //     throw new ApiError(error, ApiErrorType.Unknown);
+    //   }
 
-      throw error;
-    }
+    //   throw error;
+    // }
   }
 
   return data;

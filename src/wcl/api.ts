@@ -70,13 +70,14 @@ export enum ApiErrorType {
   Unauthorized,
   TokenRevoked,
   TokenExpired,
+  RateLimit,
 }
 
 export class ApiError extends Error {
   public readonly type: ApiErrorType;
   public readonly cause: Error;
-  constructor(cause: Error, type: ApiErrorType) {
-    super(cause.message);
+  constructor(cause: Error, type: ApiErrorType, message?: string) {
+    super(message ?? cause.message);
     this.cause = cause;
     this.type = type;
   }
@@ -108,19 +109,17 @@ export async function query<T, V extends Variables>(
     userToken?.accessToken !== undefined ||
     userToken?.refreshToken !== undefined;
   let token = hasUserToken ? await getUserToken(userToken) : await getToken();
+
+  const requestUrl = `https://${subdomain(gameType)}.${
+    process.env.WCL_PRIMARY_DOMAIN
+  }/api/v2/${hasUserToken ? "user" : "client"}`;
+
   const run = () =>
-    request<T>(
-      `https://${subdomain(gameType)}.${
-        process.env.WCL_PRIMARY_DOMAIN
-      }/api/v2/${hasUserToken ? "user" : "client"}`,
-      gql,
-      variables,
-      {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        "Accept-Encoding": "deflate,gzip",
-      },
-    );
+    request<T>(requestUrl, gql, variables, {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "Accept-Encoding": "deflate,gzip",
+    });
   let data;
   try {
     data = await run();
@@ -132,6 +131,13 @@ export async function query<T, V extends Variables>(
 
       if (hasUserToken && !(await isValidUserToken(token))) {
         throw new ApiError(error, ApiErrorType.Unauthorized);
+      }
+      if (error.response.status === 429) {
+        throw new ApiError(
+          error,
+          ApiErrorType.RateLimit,
+          `429 Response accessing "${requestUrl}"`,
+        );
       }
     }
 

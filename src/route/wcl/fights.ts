@@ -98,6 +98,12 @@ const fightQuery = gql`
             start_time: startTime
             end_time: endTime
             kill
+            enemyNPCs {
+              id
+              gameID
+              minimumInstanceID
+              maximumInstanceID
+            }
           }
           phases: phaseTransitions {
             id

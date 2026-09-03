@@ -53,12 +53,24 @@ async function isValidUserToken(accessToken?: string) {
   } catch (error) {}
 }
 
-// TODO: refresh token
+const TOKEN_REFRESH_TIMEOUT = 30_000;
+let lastTokenRefreshTime: Date | undefined;
 let token: string | undefined = undefined;
 async function getToken(force: boolean = false): Promise<string | undefined> {
   if (!force && token) {
     return token;
   }
+
+  // do not allow attempting a token refresh more than once per 30s to avoid the /oauth/token rate limit.
+  if (
+    token &&
+    lastTokenRefreshTime &&
+    new Date().getTime() - lastTokenRefreshTime.getTime() <
+      TOKEN_REFRESH_TIMEOUT
+  ) {
+    return token;
+  }
+
   token = await fetchToken();
   return token;
 }
@@ -104,6 +116,7 @@ export async function query<T, V extends Variables>(
     accessToken?: string;
   },
   gameType: GameType = GameType.Retail,
+  retries = 1,
 ): Promise<T> {
   const hasUserToken =
     userToken?.accessToken !== undefined ||
@@ -139,29 +152,18 @@ export async function query<T, V extends Variables>(
           `429 Response accessing "${requestUrl}"`,
         );
       }
+
+      if (
+        (error.response.status === 403 || error.response.status === 401) &&
+        !hasUserToken &&
+        retries > 0
+      ) {
+        await getToken(true);
+        return query(gql, variables, userToken, gameType, 0);
+      }
     }
 
     throw error;
-
-    // blindly attempt to reauthenticate and try again
-    // token = hasUserToken ? await getUserToken(userToken) : await getToken(true);
-    // try {
-    //   data = await run();
-    // } catch (error) {
-    //   if (error instanceof ClientError) {
-    //     if (isPrivateLogError(error)) {
-    //       throw new ApiError(error, ApiErrorType.NoSuchLog);
-    //     }
-    //     if (hasUserToken && !(await isValidUserToken(token))) {
-    //       throw new ApiError(error, ApiErrorType.Unauthorized);
-    //     }
-
-    //     // we only use Unknown here after attempting to re-auth to make sure that the re-auth happens
-    //     throw new ApiError(error, ApiErrorType.Unknown);
-    //   }
-
-    //   throw error;
-    // }
   }
 
   return data;

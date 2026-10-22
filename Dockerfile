@@ -1,4 +1,4 @@
-FROM node:21-alpine as build
+FROM node:26-alpine as build
 
 RUN apk add gcompat
 
